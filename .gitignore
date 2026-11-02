@@ -243,3 +243,6 @@ steam_appid.txt
 !/[Aa]ssets/
 !/[Pp]ackages/
 !/[Pp]roject[Ss]ettings/
+
+# Blender backups
+*.blend1

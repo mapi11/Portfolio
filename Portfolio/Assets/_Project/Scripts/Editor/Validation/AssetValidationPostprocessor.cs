@@ -7,6 +7,8 @@ namespace Portfolio.Editor.Validation
 {
     public class AssetValidationPostprocessor : AssetPostprocessor
     {
+        public override int GetPostprocessOrder() => 100;
+
         void OnPreprocessTexture()
         {
             var budgets = AssetBudgets.Load();

@@ -14,6 +14,14 @@ Pet-проекты Technical Artist на Unity 6 (URP): VFX, шейдеры, р�
 
 Сцена: `Assets/_Project/Scenes/WeaponRange.unity`
 
+### FP Arms Rig: руки и AK47
+
+![FP Arms Rig](Docs/Images/fps_arms_reload.png)
+
+Риг рук от первого лица с автоматом: скелет по стандарту студии, twist-кости, IK-контролы в Blender, анимация перезарядки. В Unity — two-bone IK левой руки, который выключается на перезарядке, и VFX выстрела на сокетах оружия. [Подробнее](Docs/Rig.md)
+
+Сцена: `Assets/_Project/Scenes/WeaponRange.unity` (R — перезарядка)
+
 ### Grass Field: трава с ветром
 
 ![Grass Field](Docs/Images/grass_field.png)
