@@ -31,6 +31,8 @@ SHOULDERS = Vector((0, 0.03, -0.29))    # середина плеч относи
 GRIP = Vector((-0.12, -0.27, -0.2))    # пистолетная рукоять в позе удержания
 AK_SCALE = 0.88 / 1.986                # длина реального АК
 ARMS_SCALE = 1.12
+PALM_LENGTH = 0.07      # от запястья до центра ладони
+PALM_THICKNESS = 0.02
 
 FINGERS = ("index", "middle", "ring", "pinky")
 
@@ -126,10 +128,33 @@ def import_ak():
     mag_lo, mag_hi = bounds(parts["Magazine"])
     bolt_lo, bolt_hi = bounds(parts["Bolt"])
     top = max(v.z for v in verts if abs(v.y - GRIP.y) < 0.15)
+    trig = xf @ trigger
+
+    # рукоять: всё, что ниже спуска и позади него
+    grip = [v for v in verts if trig.y + 0.01 < v.y < trig.y + 0.13 and v.z < trig.z - 0.02]
+    grip_top = max(v.z for v in grip)
+    grip_bottom = min(v.z for v in grip)
+    upper = [v for v in grip if v.z > grip_top - 0.02]
+    lower = [v for v in grip if v.z < grip_bottom + 0.02]
+    grip_a = sum(upper, Vector()) / len(upper)
+    grip_b = sum(lower, Vector()) / len(lower)
+    grip_width = max(v.x for v in grip) - min(v.x for v in grip)
+
+    # цевьё: впереди магазина, под стволом
+    hg = [v for v in verts if mag_lo.y - 0.16 < v.y < mag_lo.y - 0.03 and v.z < top - 0.02]
+    hg_bottom = min(v.z for v in hg)
+    hg_y = (mag_lo.y - 0.16 + mag_lo.y - 0.03) / 2
+    handguard = Vector(((min(v.x for v in hg) + max(v.x for v in hg)) / 2, hg_y, hg_bottom))
     points = {
+        "grip_top": grip_a,
+        "grip_bottom": grip_b,
+        "grip_width": grip_width,
+        "handguard": handguard,
+        "handguard_bottom": handguard,
+        "mag_front_top": Vector(((mag_lo.x + mag_hi.x) / 2, mag_lo.y, mag_hi.z)),
+        "mag_width": mag_hi.x - mag_lo.x,
         "muzzle": muzzle,
         "shell": Vector((bolt_lo.x, (bolt_lo.y + bolt_hi.y) / 2, (bolt_lo.z + bolt_hi.z) / 2)),
-        "handguard": Vector((GRIP.x, mag_lo.y - 0.05, mag_hi.z + 0.015)),
         "magazine": (mag_lo + mag_hi) / 2,
         "mag_top": Vector(((mag_lo.x + mag_hi.x) / 2, (mag_lo.y + mag_hi.y) / 2, mag_hi.z)),
         "bolt": (bolt_lo + bolt_hi) / 2,
@@ -194,7 +219,7 @@ def build_skeleton(rig, points):
     edit_bone(eb, "ik_hand_l", eb["b_hand_l"].head.copy(), eb["b_hand_l"].tail.copy(), "b_weapon_root", deform=False)
     for side, sign in (("l", 1), ("r", -1)):
         elbow = eb[f"b_forearm_{side}"].head.copy()
-        pole = SHOULDERS + (Vector((0.1, -0.35, -0.35)) if side == "l" else Vector((-0.35, -0.05, -0.25)))
+        pole = SHOULDERS + (Vector((0.1, -0.35, -0.35)) if side == "l" else Vector((-0.5, 0.0, -0.12)))
         edit_bone(eb, f"ik_pole_elbow_{side}", pole, pole + UP * 0.05, "b_spine_fp", deform=False)
     bpy.ops.object.mode_set(mode="OBJECT")
 
@@ -247,44 +272,61 @@ def split_twist_weights(rig, mesh):
     bpy.ops.object.mode_set(mode="OBJECT")
 
 
-def aim_matrix(direction, side_axis, location):
-    """Матрица кости: Y вдоль direction, Z перпендикулярно, X по side_axis."""
-    y = direction.normalized()
-    x = (side_axis - y * side_axis.dot(y)).normalized()
-    z = x.cross(y)
-    m = Matrix((x, y, z)).transposed().to_4x4()
-    m.translation = location
+def hand_matrix(side, contact, palm, fingers):
+    """Матрица кисти по точке контакта ладони, направлению ладони и пальцев.
+    Оси кости кисти: Y — пальцы, Z — большой палец, ладонь смотрит в +X у левой и в -X у правой."""
+    f = fingers.normalized()
+    n = (palm - f * palm.dot(f)).normalized()
+    x = n if side == "l" else -n
+    m = Matrix((x, f, x.cross(f))).transposed().to_4x4()
+    m.translation = contact - f * PALM_LENGTH - n * PALM_THICKNESS
     return m
 
 
-def hold_pose(rig):
-    """Пальцы обхватывают рукоять и цевьё; цели IK — в осях оружия."""
-    pb = rig.pose.bones
-    for side, curl in (("r", 70), ("l", 55)):
-        for finger in FINGERS:
-            for i, k in (("01", 1.0), ("02", 1.1), ("03", 0.8)):
-                b = pb[f"b_{finger}_{i}_{side}"]
-                b.rotation_mode = "XYZ"
-                b.rotation_euler = (math.radians(curl * k), 0, 0)
-        for i, ang in (("01", 20), ("02", 25), ("03", 20)):
-            b = pb[f"b_thumb_{i}_{side}"]
+# Сгиб к ладони — положительный поворот по X (и у пальцев, и у большого).
+# В покое пальцы модели уже согнуты на 25-35 градусов, это учтено в первом суставе.
+GRIPS = {
+    "open":       {"index": (-15, 5, 5), "middle": (-15, 5, 5), "ring": (-15, 5, 5), "pinky": (-15, 5, 5), "thumb": (0, 0, 0)},
+    "pistol":     {"index": (25, 35, 20), "middle": (55, 85, 55), "ring": (55, 85, 55), "pinky": (55, 85, 55), "thumb": (35, 30, 20)},
+    "pistol_off": {"index": (0, 5, 5), "middle": (55, 85, 55), "ring": (55, 85, 55), "pinky": (55, 85, 55), "thumb": (35, 30, 20)},
+    "handguard":  {"index": (35, 60, 40), "middle": (40, 65, 45), "ring": (45, 65, 45), "pinky": (45, 70, 45), "thumb": (20, 10, 5)},
+    "magazine":   {"index": (-5, 10, 45), "middle": (-5, 12, 50), "ring": (0, 15, 50), "pinky": (5, 20, 50), "thumb": (20, 10, 0)},
+}
+
+
+def set_grip(rig, side, grip, frame=None):
+    for finger, angles in GRIPS[grip].items():
+        for i, angle in zip(("01", "02", "03"), angles):
+            b = rig.pose.bones[f"b_{finger}_{i}_{side}"]
             b.rotation_mode = "XYZ"
-            b.rotation_euler = (math.radians(ang), 0, 0)
+            b.rotation_euler = (math.radians(angle), 0, 0)
+            if frame is not None:
+                b.keyframe_insert("rotation_euler", frame=frame)
+
+
+def hold_targets(points):
+    # правая: ладонь на задней правой стороне рукояти, пальцы обхватывают спереди, большой — вверх вдоль неё
+    axis = (points["grip_bottom"] - points["grip_top"]).normalized()
+    mid = points["grip_top"].lerp(points["grip_bottom"], 0.45)
+    palm_r = (-RIGHT * 0.8 + FORWARD * 0.35).normalized()
+    fingers_r = axis.cross(palm_r)
+    if fingers_r.dot(FORWARD) < 0:
+        fingers_r = -fingers_r
+    contact_r = mid - palm_r * (points["grip_width"] * 0.5)
+    hold_r = hand_matrix("r", contact_r, palm_r, fingers_r)
+
+    # левая: ладонь вверх под цевьём, пальцы обхватывают его справа, большой вдоль ствола
+    contact_l = points["handguard_bottom"]
+    hold_l = hand_matrix("l", contact_l, UP, RIGHT + FORWARD * 0.25 + UP * 0.15)
+    return hold_r, hold_l
 
 
 def place_ik_targets(rig, points):
-    pb = rig.pose.bones
-    # правая кисть: запястье за рукоятью, пальцы вперёд-вниз вокруг неё
-    wrist_r = GRIP + Vector((-0.02, 0.07, 0.06))
-    dir_r = (FORWARD * 0.55 - UP * 0.75 + RIGHT * -0.15)
-    m_r = aim_matrix(dir_r, RIGHT * -1 + UP * 0.2, wrist_r)
-    # левая кисть: под цевьём, ладонь вверх
-    wrist_l = points["handguard"] + Vector((0.07, 0.05, -0.05))
-    dir_l = (FORWARD * 0.6 + RIGHT * 0.75 + UP * 0.1)
-    m_l = aim_matrix(dir_l, UP * -1, wrist_l)
-    for name, m in (("ik_hand_r", m_r), ("ik_hand_l", m_l)):
-        bone = pb[name]
-        bone.matrix = m
+    hold_r, hold_l = hold_targets(points)
+    rig.pose.bones["ik_hand_r"].matrix = hold_r
+    rig.pose.bones["ik_hand_l"].matrix = hold_l
+    set_grip(rig, "r", "pistol")
+    set_grip(rig, "l", "handguard")
     bpy.context.view_layer.update()
 
 
@@ -296,14 +338,14 @@ def finger_bones(rig):
 
 
 def key(rig, name, frame, matrix=None):
-    """matrix — желаемое положение кости в пространстве арматуры при оружии в покое.
-    Для детей b_weapon_root поза родителя сокращается, поэтому basis от кадра не зависит."""
+    # matrix — положение кости в пространстве арматуры при оружии в покое.
+    # Для детей b_weapon_root поза родителя сокращается, поэтому basis от кадра не зависит.
     b = rig.pose.bones[name]
-    b.rotation_mode = "QUATERNION" if b.name in CONTROLS else b.rotation_mode
+    b.rotation_mode = "QUATERNION"
     if matrix is not None:
         b.matrix_basis = b.bone.matrix_local.inverted() @ matrix
     b.keyframe_insert("location", frame=frame)
-    b.keyframe_insert("rotation_quaternion" if b.rotation_mode == "QUATERNION" else "rotation_euler", frame=frame)
+    b.keyframe_insert("rotation_quaternion", frame=frame)
 
 
 def new_action(rig, name):
@@ -314,55 +356,81 @@ def new_action(rig, name):
     return action
 
 
-def make_hold(rig):
+def make_hold(rig, points):
     new_action(rig, "Hold")
-    for name in CONTROLS + tuple(finger_bones(rig)):
-        key(rig, name, 0)
-        key(rig, name, 1)
+    hold_r, hold_l = hold_targets(points)
+    for frame in (0, 1):
+        key(rig, "ik_hand_r", frame, hold_r)
+        key(rig, "ik_hand_l", frame, hold_l)
+        for name in ("b_weapon_attach", "b_magazine", "b_bolt", "b_trigger"):
+            key(rig, name, frame, rig.pose.bones[name].bone.matrix_local)
+        set_grip(rig, "r", "pistol", frame)
+        set_grip(rig, "l", "handguard", frame)
 
 
 def make_reload(rig, points):
-    pb = rig.pose.bones
-    rest = {n: pb[n].bone.matrix_local.copy() for n in CONTROLS}
-    hold_l = pb["ik_hand_l"].matrix.copy()
-    hold_r = pb["ik_hand_r"].matrix.copy()
+    rest = {n: rig.pose.bones[n].bone.matrix_local.copy() for n in CONTROLS}
+    hold_r, hold_l = hold_targets(points)
     new_action(rig, "Reload")
 
-    for name in finger_bones(rig):
-        key(rig, name, 0)
     key(rig, "ik_hand_r", 0, hold_r)
     key(rig, "b_trigger", 0, rest["b_trigger"])
+    key(rig, "b_bolt", 0, rest["b_bolt"])
 
-    # наклон оружия вокруг рукояти: магазин поворачивается к левой руке
+    # оружие: замах вниз, наклон магазином к левой руке, толчок при досылании, возврат с перелётом
     def tilt(frame, roll, pitch, lift):
         r = Matrix.Rotation(math.radians(roll), 4, FORWARD) @ Matrix.Rotation(math.radians(pitch), 4, RIGHT)
         m = Matrix.Translation(GRIP + lift) @ r @ Matrix.Translation(-GRIP) @ rest["b_weapon_attach"]
         key(rig, "b_weapon_attach", frame, m)
 
-    up = Vector((0.03, 0, 0.03))
-    for frame, roll, pitch, lift in ((0, 0, 0, Vector()), (8, 22, 6, up), (44, 22, 6, up), (46, 24, 2, up),
-                                     (49, 22, 6, up), (56, 4, 1, up * 0.3),
-                                     (59, -2, -1, Vector()), (62, 0, 0, Vector())):
-        tilt(frame, roll, pitch, lift)
+    lift = Vector((0.025, 0.0, 0.02))
+    for frame, roll, pitch, offset in (
+            (0, 0, 0, Vector()), (4, -2, -2, Vector((0, 0, -0.008))), (11, 24, 8, lift), (18, 26, 6, lift),
+            (22, 23, 9, lift), (40, 24, 8, lift), (46, 25, 7, lift), (48, 22, 4, lift + Vector((0, 0, 0.012))),
+            (51, 24, 8, lift), (56, 8, 3, lift * 0.4), (61, -3, -1.5, Vector()), (66, 0, 0, Vector())):
+        tilt(frame, roll, pitch, offset)
 
-    grab = points["magazine"] + Vector((0.07, 0.04, -0.06))
-    hand = lambda pos: Matrix.Translation(pos - hold_l.translation) @ hold_l
-    out_1 = Vector((0.08, 0.06, -0.22))
-    out_2 = Vector((0.18, 0.12, -0.45))
-    seat = Vector((0, 0, 0.012))
-    left = ((0, hold_l), (6, hold_l), (12, hand(grab)), (16, hand(grab)), (24, hand(grab + out_1)),
-            (32, hand(grab + out_2)), (38, hand(grab + out_2)), (44, hand(grab + out_1 * 0.35)),
-            (47, hand(grab + seat)), (49, hand(grab)), (57, hold_l), (62, hold_l))
-    for frame, m in left:
-        key(rig, "ik_hand_l", frame, m)
+    # магазин: качнуть вперёд на переднем зацепе, вытащить вниз; новый — зацепом вперёд и досылом назад
+    pivot = points["mag_front_top"]
 
-    # магазин едет вместе с рукой, на 32-38 кадре он за кадром — «новый» возвращается
-    mag = rest["b_magazine"]
-    for frame, offset in ((0, None), (16, None), (24, out_1), (32, out_2), (38, out_2), (44, out_1 * 0.35),
-                          (47, seat), (49, None), (62, None)):
-        key(rig, "b_magazine", frame, Matrix.Translation(offset) @ mag if offset else mag)
+    def mag(rock, offset=Vector()):
+        return (Matrix.Translation(offset + pivot) @ Matrix.Rotation(math.radians(rock), 4, "X")
+                @ Matrix.Translation(-pivot))
 
-    key(rig, "b_bolt", 0, rest["b_bolt"])
+    mag_center = points["magazine"]
+    mag_side = mag_center + RIGHT * -(points["mag_width"] * 0.5)
+    # ладонь на левой стороне магазина, пальцы обхватывают его передний край, большой — сзади
+    grab = hand_matrix("l", mag_side + UP * -0.02 + FORWARD * -0.015, RIGHT, FORWARD - UP * 0.35)
+
+    out_1 = Vector((0.06, 0.05, -0.16))
+    out_2 = Vector((0.2, 0.14, -0.42))
+    path = (
+        (14, mag(0)), (16, mag(0)), (19, mag(-22)), (24, mag(-26, out_1)), (31, mag(-35, out_2)),
+        (38, mag(-35, out_2)), (43, mag(-28, out_1 * 0.4)), (46, mag(-24, Vector((0, 0, 0.003)))),
+        (48, mag(1, Vector((0, 0, 0.006)))), (50, mag(0)),
+    )
+    for frame, m in path:
+        key(rig, "b_magazine", frame, m @ rest["b_magazine"])
+        key(rig, "ik_hand_l", frame, m @ grab)
+    key(rig, "b_magazine", 0, rest["b_magazine"])
+    key(rig, "b_magazine", 66, rest["b_magazine"])
+
+    # левая рука: с цевья к магазину по дуге вниз, после досыла обратно
+    down = Matrix.Translation(Vector((0.02, 0.02, -0.05)))
+    key(rig, "ik_hand_l", 0, hold_l)
+    key(rig, "ik_hand_l", 5, hold_l)
+    key(rig, "ik_hand_l", 10, down @ hold_l.lerp(grab, 0.6))
+    key(rig, "ik_hand_l", 53, grab)
+    key(rig, "ik_hand_l", 58, down @ grab.lerp(hold_l, 0.6))
+    key(rig, "ik_hand_l", 62, hold_l)
+    key(rig, "ik_hand_l", 66, hold_l)
+
+    for frame, grip in ((0, "handguard"), (5, "handguard"), (9, "open"), (13, "open"), (15, "magazine"),
+                        (50, "magazine"), (52, "open"), (59, "open"), (62, "handguard"), (66, "handguard")):
+        set_grip(rig, "l", grip, frame)
+    # указательный правой снимается со спуска на время перезарядки
+    for frame, grip in ((0, "pistol"), (4, "pistol"), (8, "pistol_off"), (58, "pistol_off"), (63, "pistol"), (66, "pistol")):
+        set_grip(rig, "r", grip, frame)
 
 
 def export_fbx(rig, mesh, weapon):
@@ -420,19 +488,18 @@ def main():
     split_twist_weights(rig, mesh)
     bind(rig, mesh, weapon)
     setup_constraints(rig)
-    hold_pose(rig)
     place_ik_targets(rig, points)
     make_reload(rig, points)
-    make_hold(rig)
+    make_hold(rig, points)
 
     scene = bpy.context.scene
     scene.render.fps = 30
-    scene.frame_start, scene.frame_end = 0, 62
+    scene.frame_start, scene.frame_end = 0, 66
     reload = bpy.data.actions["Reload"]
     if PREVIEW:
         os.makedirs(PREVIEW, exist_ok=True)
         rig.animation_data.action = reload
-        for frame in (0, 12, 30, 47, 54):
+        for frame in (0, 10, 19, 31, 47, 58):
             scene.frame_set(frame)
             render(os.path.join(PREVIEW, f"reload_{frame:02d}.png"), Vector((0, 0, 0)), Vector((0, -1, 0)), lens=None)
         scene.frame_set(0)
