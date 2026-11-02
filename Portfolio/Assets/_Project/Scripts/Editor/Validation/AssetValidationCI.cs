@@ -6,7 +6,7 @@ namespace Portfolio.Editor.Validation
 {
     /// <summary>
     /// Точка входа для CI:
-    /// Unity -batchmode -nographics -projectPath . -executeMethod Portfolio.Editor.Validation.AssetValidationCI.Run -quit
+    /// Unity -batchmode -nographics -projectPath Portfolio -executeMethod Portfolio.Editor.Validation.AssetValidationCI.Run -quit
     /// Код выхода 1, если есть ошибки (предупреждения сборку не валят).
     /// </summary>
     public static class AssetValidationCI

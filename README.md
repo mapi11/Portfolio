@@ -44,7 +44,7 @@
 - **CI**: код выхода 1, если есть ошибки:
 
 ```bash
-Unity -batchmode -nographics -projectPath . -executeMethod Portfolio.Editor.Validation.AssetValidationCI.Run -quit -logFile -
+Unity -batchmode -nographics -projectPath Portfolio -executeMethod Portfolio.Editor.Validation.AssetValidationCI.Run -quit -logFile -
 ```
 
 ## План работ
@@ -64,10 +64,11 @@ Unity -batchmode -nographics -projectPath . -executeMethod Portfolio.Editor.Vali
 ## Структура
 
 ```
-Assets/_Project/
-  Art/Weapons/<Name>/{Source,Meshes,Textures,Materials}
-  Art/Characters/FPSArms
-  Rigs/  VFX/{Muzzle,Impacts,Tracers,Shells}  Shaders/{Sights,Decals,HitFlash}
-  Scenes/  Settings/  Scripts/{Runtime,Editor/Validation}
+Portfolio/                Unity-проект (открывать в Unity Hub эту папку)
+ Assets/_Project/
+   Art/Weapons/<Name>/{Source,Meshes,Textures,Materials}
+   Art/Characters/FPSArms
+   Rigs/  VFX/{Muzzle,Impacts,Tracers,Shells}  Shaders/{Sights,Decals,HitFlash}
+   Scenes/  Settings/  Scripts/{Runtime,Editor/Validation}
 Docs/   бюджеты, требования к ригу, профилирование, скриншоты
 ```
