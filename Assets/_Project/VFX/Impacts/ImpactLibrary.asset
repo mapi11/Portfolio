@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4990fb8d60419ec419456e937b024585, type: 3}
+  m_Name: ImpactLibrary
+  m_EditorClassIdentifier: 
+  entries:
+  - surface: 0
+    effect: {fileID: 9186603056766804763, guid: 505018b7d33898c44aaed9ded4b26254, type: 3}
+    decal: {fileID: 2100000, guid: b77452a92c2eeed4087cca4bb9caf6f8, type: 2}
+    decalSize: {x: 0.08, y: 0.12}
+  - surface: 2
+    effect: {fileID: 9186603056766804763, guid: 505018b7d33898c44aaed9ded4b26254, type: 3}
+    decal: {fileID: 2100000, guid: b77452a92c2eeed4087cca4bb9caf6f8, type: 2}
+    decalSize: {x: 0.08, y: 0.12}
+  - surface: 1
+    effect: {fileID: 2114543669790921603, guid: 87084adf6ebea8044b1ed9280abed71b, type: 3}
+    decal: {fileID: 2100000, guid: 13fb8e0f24ab2f84aa9a6d8cdfb978be, type: 2}
+    decalSize: {x: 0.05, y: 0.07}
+  - surface: 3
+    effect: {fileID: 296675775210468631, guid: 0f1cfe98ea9b3654ca014bc0aaea3302, type: 3}
+    decal: {fileID: 2100000, guid: ec49ee0f9b214e6458041ff39476d3de, type: 2}
+    decalSize: {x: 0.06, y: 0.09}

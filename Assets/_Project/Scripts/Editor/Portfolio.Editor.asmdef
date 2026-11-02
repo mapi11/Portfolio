@@ -1,7 +1,11 @@
 {
     "name": "Portfolio.Editor",
     "rootNamespace": "Portfolio.Editor",
-    "references": [],
+    "references": [
+        "Portfolio.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime"
+    ],
     "includePlatforms": [
         "Editor"
     ],
