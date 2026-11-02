@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4afd043a68081744586e864be0bbafdc, type: 3}
+  m_Name: AssetBudgets
+  m_EditorClassIdentifier: 
+  rules:
+  - name: Props
+    folder: Assets/_Project/Art
+    maxTrianglesLod0: 3000
+    minLodCount: 2
+    maxLodTriangleRatio: 0.6
+    maxMaterialsPerRenderer: 1
+    maxBones: 0
+    maxBonesPerVertex: 4
+    maxTextureSize: 1024
+    requireMobileCompression: 1
+  - name: FP Weapon
+    folder: Assets/_Project/Art/Weapons
+    maxTrianglesLod0: 12000
+    minLodCount: 3
+    maxLodTriangleRatio: 0.6
+    maxMaterialsPerRenderer: 2
+    maxBones: 20
+    maxBonesPerVertex: 2
+    maxTextureSize: 2048
+    requireMobileCompression: 1
+  - name: FP Arms
+    folder: Assets/_Project/Art/Characters/FPSArms
+    maxTrianglesLod0: 8000
+    minLodCount: 0
+    maxLodTriangleRatio: 0.6
+    maxMaterialsPerRenderer: 1
+    maxBones: 45
+    maxBonesPerVertex: 4
+    maxTextureSize: 1024
+    requireMobileCompression: 1
+  staticMeshPrefix: SM_
+  skinnedMeshPrefix: SK_
+  texturePrefix: T_
+  materialPrefix: M_
+  linearSuffixes:
+  - _N
+  - _MRAO
+  - _ORM
+  - _Mask
+  normalSuffix: _N
