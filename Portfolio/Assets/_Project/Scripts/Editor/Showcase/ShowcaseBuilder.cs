@@ -378,6 +378,7 @@ namespace Portfolio.Editor.Showcase
             var benchmark = systems.AddComponent<Benchmark>();
             benchmark.weapon = weapon;
             benchmark.look = look;
+            benchmark.decals = decals;
 
             Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
             EditorSceneManager.SaveScene(scene, ScenePath);

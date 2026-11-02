@@ -1,4 +1,5 @@
 using System;
+using Portfolio.VFX;
 using Portfolio.Weapon;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -14,6 +15,8 @@ namespace Portfolio.Diagnostics
     {
         public WeaponController weapon;
         public FirstPersonLook look;
+        [Tooltip("Необязательно: показывать число декалей в HUD")]
+        public DecalSystem decals;
         public float duration = 30f;
         [Tooltip("Амплитуда проводки прицела, градусы (рыскание, тангаж)")]
         public Vector2 sweep = new(35f, 6f);
@@ -120,6 +123,8 @@ namespace Portfolio.Diagnostics
             var ms = m_Live.AverageMs;
             GUILayout.BeginArea(new Rect(10 * scale, 10 * scale, 520 * scale, 200 * scale));
             GUILayout.Label($"{ms:0.0} ms  {1000f / Mathf.Max(ms, 0.01f):0} fps  1% low {m_Live.OnePercentLowFps:0}", m_Style);
+            if (decals != null)
+                GUILayout.Label($"Decals {decals.ActiveCount}/{decals.maxDecals}, draw calls {decals.DrawCalls}", m_Style);
             if (Running)
                 GUILayout.Label($"Benchmark: {duration - (Time.time - m_StartTime):0}s", m_Style);
             else if (GUILayout.Button("Benchmark (B)", GUILayout.Width(180 * scale), GUILayout.Height(36 * scale)))

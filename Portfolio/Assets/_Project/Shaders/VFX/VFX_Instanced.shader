@@ -1,5 +1,6 @@
 // Декали и трассеры через Graphics.RenderMeshInstanced: один draw call на материал.
 // Depth offset вместо depth prepass/DBuffer у URP Decal Projector.
+// Instanced-свойство _FadeOut даёт затухание каждой декали без смены материала.
 Shader "Portfolio/VFX/Instanced"
 {
     Properties
@@ -40,6 +41,12 @@ Shader "Portfolio/VFX/Instanced"
 
             #include "PremultipliedVFX.hlsl"
 
+            // Затухание на экземпляр (0 — видно, 1 — исчезло). Не заданное свойство
+            // читается как 0, поэтому трассеры, которые его не передают, видны полностью.
+            UNITY_INSTANCING_BUFFER_START(PerInstance)
+                UNITY_DEFINE_INSTANCED_PROP(float, _FadeOut)
+            UNITY_INSTANCING_BUFFER_END(PerInstance)
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -51,6 +58,7 @@ Shader "Portfolio/VFX/Instanced"
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
+                half alpha : TEXCOORD1;
             };
 
             Varyings Vert(Attributes input)
@@ -59,12 +67,13 @@ Shader "Portfolio/VFX/Instanced"
                 Varyings output;
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                output.alpha = 1.0h - UNITY_ACCESS_INSTANCED_PROP(PerInstance, _FadeOut);
                 return output;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
-                return PremultipliedColor(input.uv, half4(1, 1, 1, 1));
+                return PremultipliedColor(input.uv, half4(1, 1, 1, input.alpha));
             }
             ENDHLSL
         }
