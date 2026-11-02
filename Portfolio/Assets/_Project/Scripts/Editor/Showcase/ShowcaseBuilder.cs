@@ -382,7 +382,7 @@ namespace Portfolio.Editor.Showcase
 
             Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
             EditorSceneManager.SaveScene(scene, ScenePath);
-            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+            BuildScenes.Add(ScenePath);
         }
 
         static void BuildPlaceholderWeapon(Transform parent, Material gunMetal, Material polymer)

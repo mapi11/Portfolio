@@ -5,23 +5,31 @@ using UnityEngine;
 namespace Portfolio.Editor.Showcase
 {
     /// <summary>
-    /// Билды для замеров. Batchmode:
-    /// -executeMethod Portfolio.Editor.Showcase.PlayerBuilds.Windows
-    /// -executeMethod Portfolio.Editor.Showcase.PlayerBuilds.Android
+    /// Билды отдельных демо-сцен для замеров. Batchmode:
+    /// -executeMethod Portfolio.Editor.Showcase.PlayerBuilds.Windows (или WindowsGrass, Android, AndroidGrass)
     /// </summary>
     public static class PlayerBuilds
     {
-        [MenuItem("Tools/Portfolio/Build/Windows")]
-        public static void Windows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/WeaponRange.exe");
+        const string WeaponRange = "Assets/_Project/Scenes/WeaponRange.unity";
+        const string GrassField = "Assets/_Project/Scenes/GrassField.unity";
 
-        [MenuItem("Tools/Portfolio/Build/Android")]
-        public static void Android() => Build(BuildTarget.Android, "Builds/Android/WeaponRange.apk");
+        [MenuItem("Tools/Portfolio/Build/Windows - Weapon Range")]
+        public static void Windows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/WeaponRange.exe", WeaponRange);
 
-        static void Build(BuildTarget target, string path)
+        [MenuItem("Tools/Portfolio/Build/Windows - Grass Field")]
+        public static void WindowsGrass() => Build(BuildTarget.StandaloneWindows64, "Builds/WindowsGrass/GrassField.exe", GrassField);
+
+        [MenuItem("Tools/Portfolio/Build/Android - Weapon Range")]
+        public static void Android() => Build(BuildTarget.Android, "Builds/Android/WeaponRange.apk", WeaponRange);
+
+        [MenuItem("Tools/Portfolio/Build/Android - Grass Field")]
+        public static void AndroidGrass() => Build(BuildTarget.Android, "Builds/Android/GrassField.apk", GrassField);
+
+        static void Build(BuildTarget target, string path, string scene)
         {
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
             {
-                scenes = new[] { "Assets/_Project/Scenes/WeaponRange.unity" },
+                scenes = new[] { scene },
                 locationPathName = path,
                 target = target,
                 options = BuildOptions.None

@@ -14,6 +14,14 @@ Pet-проекты Technical Artist на Unity 6 (URP): VFX, шейдеры, р�
 
 Сцена: `Assets/_Project/Scenes/WeaponRange.unity`
 
+### Grass Field: трава с ветром
+
+![Grass Field](Docs/Images/grass_field.png)
+
+Поле травы для мобильных: ~50 тыс. травинок за 2 draw calls, волны ветра, отталкивание от объектов, просвет против солнца. Без альфа-теста и compute-шейдеров. [Подробнее](Docs/Grass.md)
+
+Сцена: `Assets/_Project/Scenes/GrassField.unity`
+
 ### Asset Validator
 
 Проверка 3D-ассетов по бюджетам (полигоны, LOD, кости, текстуры, именование) при импорте, в окне редактора и в CI.
