@@ -30,6 +30,18 @@ Pet-проекты Technical Artist на Unity 6 (URP): VFX, шейдеры, р�
 
 Сцена: `Assets/_Project/Scenes/WinterGlade.unity`
 
+## Инструменты для художников
+
+Editor-окна в меню `Tools/Portfolio`. Работают только в редакторе и в билд не попадают.
+
+### Material Replacer
+
+![Material Replacer](Docs/Images/tool_material_replacer.png)
+
+Замена материала на объекте сцены: перетащить объект из Hierarchy, материал из Project и нажать кнопку. Заменяет все слоты, по желанию вместе с дочерними объектами, откатывается через Ctrl+Z.
+
+`Tools/Portfolio/Material Replacer`
+
 ### Asset Validator
 
 Проверка 3D-ассетов по бюджетам (полигоны, LOD, кости, текстуры, именование) при импорте, в окне редактора и в CI.
