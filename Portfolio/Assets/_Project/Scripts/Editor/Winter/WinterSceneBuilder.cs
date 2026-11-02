@@ -12,10 +12,6 @@ using Object = UnityEngine.Object;
 
 namespace Portfolio.Editor.Winter
 {
-    /// <summary>
-    /// Зимняя cartoon-поляна: рельеф со снегом, замёрзшая река, ёлка, камни, трава
-    /// из-под снега, снегопад. Batchmode: -executeMethod Portfolio.Editor.Winter.WinterSceneBuilder.Build
-    /// </summary>
     public static class WinterSceneBuilder
     {
         const string Root = "Assets/_Project/Art/Winter";
@@ -48,7 +44,6 @@ namespace Portfolio.Editor.Winter
             snow.SetFloat("_SnowVariation", 0.16f);
             var props = ToonMaterial("M_Toon_Props", noise);
             props.SetFloat("_SparkleStrength", 1f);
-            // У ярусов ёлки нормали «раздуты» в стороны: снегу нужен порог ниже, чем у камней.
             var pineMaterial = ToonMaterial("M_Toon_Pine", noise);
             pineMaterial.SetFloat("_SnowThreshold", 0.3f);
             pineMaterial.SetFloat("_SnowNoise", 0.55f);
@@ -81,8 +76,6 @@ namespace Portfolio.Editor.Winter
             Debug.Log("Winter glade built: " + ScenePath);
         }
 
-        // --- Раскладка ---
-
         static readonly Vector3 TreePosition = new(-3f, 0f, 3.5f);
 
         static List<Vector3> TuftPositions()
@@ -90,7 +83,6 @@ namespace Portfolio.Editor.Winter
             var random = new System.Random(21);
             float Range(float a, float b) => a + (float)random.NextDouble() * (b - a);
             var result = new List<Vector3>();
-            // Пучки группами: в мультфильмах трава торчит островками, а не ровным ковром.
             for (var cluster = 0; cluster < 30; cluster++)
             {
                 var center = new Vector2(Range(-16f, 16f), Range(-12f, 14f));
@@ -122,7 +114,6 @@ namespace Portfolio.Editor.Winter
             treePosition.y = WinterMeshGenerator.Height(treePosition.x, treePosition.z) - 0.1f;
             Static(environment, "Pine", pine, pineMaterial, treePosition, Quaternion.Euler(0f, 20f, 0f), Vector3.one, castShadows: true);
 
-            // Камни по берегам, часть наполовину во льду.
             var rockSpots = new[] { (-10f, 1f, 1.1f), (-6.5f, -1f, 0.7f), (-1f, 1f, 0.9f), (3.5f, -1f, 1.2f), (8f, 1f, 0.6f), (11f, -1f, 0.85f), (5.5f, 1f, 0.5f) };
             for (var i = 0; i < rockSpots.Length; i++)
             {
@@ -133,7 +124,6 @@ namespace Portfolio.Editor.Winter
                     Quaternion.Euler(0f, i * 73f, 0f), Vector3.one * scale, castShadows: true);
             }
 
-            // Свет: низкое тёплое солнце против холодных теней и неба.
             var light = Object.FindFirstObjectByType<Light>();
             light.transform.rotation = Quaternion.Euler(30f, -55f, 0f);
             light.color = new Color(1f, 0.9f, 0.76f);
@@ -153,7 +143,7 @@ namespace Portfolio.Editor.Winter
 
             var volume = new GameObject("Global Volume").AddComponent<Volume>();
             volume.isGlobal = true;
-            volume.sharedProfile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/Settings/SampleSceneProfile.asset");
+            volume.sharedProfile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/_Project/Settings/SampleSceneProfile.asset");
 
             var camera = Object.FindFirstObjectByType<Camera>();
             camera.farClipPlane = 120f;
@@ -199,9 +189,8 @@ namespace Portfolio.Editor.Winter
 
             var shape = system.shape;
             shape.shapeType = ParticleSystemShapeType.Box;
-            shape.scale = new Vector3(36f, 36f, 0.5f); // повёрнут на 90°: плоскость над поляной
+            shape.scale = new Vector3(36f, 36f, 0.5f);
 
-            // Падение со сносом ветром; шум даёт «кружение» снежинок без физики.
             var velocity = system.velocityOverLifetime;
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.World;
@@ -245,9 +234,6 @@ namespace Portfolio.Editor.Winter
             renderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
         }
 
-        // --- Текстуры ---
-
-        /// <summary>R — плавный тайлящийся шум (края снега, иней), G — редкие яркие точки (искры).</summary>
         static Color WinterNoise(int x, int y, int size, System.Random random)
         {
             float u = (float)x / size, v = (float)y / size;
@@ -258,7 +244,6 @@ namespace Portfolio.Editor.Winter
             return new Color(smooth, sparkle, 0f, 1f);
         }
 
-        /// <summary>R — трещины (рёбра тайлящейся диаграммы Вороного), G — пузырьки.</summary>
         static Color IceCracks(int x, int y, int size, System.Random random)
         {
             float u = (float)x / size, v = (float)y / size;
@@ -279,7 +264,6 @@ namespace Portfolio.Editor.Winter
             {
                 var gx = cx + ox;
                 var gy = cy + oy;
-                // Точка ячейки по модулю сетки: текстура тайлится без швов.
                 var hash = Hash(((gx % cells) + cells) % cells, ((gy % cells) + cells) % cells, seed);
                 var point = new Vector2((gx + hash.x) / cells, (gy + hash.y) / cells);
                 var d = Vector2.Distance(new Vector2(u, v), point);
@@ -316,8 +300,6 @@ namespace Portfolio.Editor.Winter
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
-        // --- Ассеты ---
-
         static Material ToonMaterial(string name, Texture2D noise)
         {
             var material = MaterialAsset(Root + "/Materials/" + name + ".mat", Shader.Find("Portfolio/Toon/Lit"));
@@ -337,7 +319,7 @@ namespace Portfolio.Editor.Winter
             Directory.CreateDirectory(Path.GetDirectoryName(path));
             mesh = new Mesh { name = name };
             AssetDatabase.CreateAsset(mesh, path);
-            EditorUtility.SetDirty(mesh); // геометрия заполняется после создания ассета
+            EditorUtility.SetDirty(mesh);
             return mesh;
         }
 

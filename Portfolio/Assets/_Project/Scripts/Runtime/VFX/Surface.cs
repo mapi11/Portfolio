@@ -4,10 +4,6 @@ namespace Portfolio.VFX
 {
     public enum SurfaceType { Default, Metal, Concrete, Wood }
 
-    /// <summary>
-    /// Тип поверхности для выбора эффекта попадания. Висит на объекте с коллайдером;
-    /// без компонента используется <see cref="SurfaceType.Default"/>.
-    /// </summary>
     [DisallowMultipleComponent]
     public class Surface : MonoBehaviour
     {

@@ -4,13 +4,6 @@ using UnityEngine.Rendering;
 
 namespace Portfolio.Grass
 {
-    /// <summary>
-    /// Поле травы из квадратных чанков. Каждый чанк — один экземпляр готового меша
-    /// (сотни травинок), все видимые чанки одного LOD рисуются одним
-    /// Graphics.RenderMeshInstanced. На CPU только куллинг по фрустуму и дистанции
-    /// и сортировка от ближних к дальним (меньше перерисовки на Mali/Adreno).
-    /// Без GameObject на травинку или чанк, без compute-шейдеров: работает на GLES 3.
-    /// </summary>
     public class GrassField : MonoBehaviour
     {
         [Header("Меши чанка (генерирует Tools/Portfolio/Build Grass Field)")]
@@ -23,14 +16,11 @@ namespace Portfolio.Grass
         [Header("Поле")]
         public Vector2 size = new(96f, 96f);
         public float chunkSize = 4f;
-        [Tooltip("Высота травинок с запасом на изгиб: для границ чанков при куллинге")]
         public float maxBladeHeight = 1f;
         public int seed = 1;
 
         [Header("Дальность")]
-        [Tooltip("До этой дистанции — полный LOD0, дальше — разреженный LOD1")]
         public float lod0Distance = 14f;
-        [Tooltip("Трава исчезает к этой дистанции (плавно сжимается в шейдере)")]
         public float maxDistance = 40f;
         public float fadeLength = 10f;
 
@@ -77,7 +67,6 @@ namespace Portfolio.Grass
             for (var x = 0; x < countX; x++)
             {
                 var center = origin + new Vector3((x + 0.5f) * chunkSize, 0f, (z + 0.5f) * chunkSize);
-                // Поворот чанка на 0/90/180/270°: квадрат остаётся квадратом, а повтор раскладки не читается.
                 var rotation = Quaternion.Euler(0f, random.Next(4) * 90f, 0f);
                 var index = z * countX + x;
                 m_Chunks[index] = Matrix4x4.TRS(center, rotation, Vector3.one);
@@ -130,7 +119,7 @@ namespace Portfolio.Grass
                 }
             }
 
-            // От ближних к дальним: ранний z-test отбрасывает закрытые травинки до фрагментного шейдера.
+            // спереди назад, чтобы early-z отбрасывал закрытые травинки
             Array.Sort(m_Lod0Keys, m_Lod0Matrices, 0, lod0Count);
             Array.Sort(m_Lod1Keys, m_Lod1Matrices, 0, lod1Count);
 

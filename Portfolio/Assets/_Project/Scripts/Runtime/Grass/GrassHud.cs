@@ -5,10 +5,6 @@ using UnityEngine;
 
 namespace Portfolio.Grass
 {
-    /// <summary>
-    /// Время кадра и статистика травы. Для README и замеров:
-    /// -screenshot path.png [-capture-after 4] — снимок экрана и выход.
-    /// </summary>
     public class GrassHud : MonoBehaviour
     {
         public GrassField field;
@@ -45,7 +41,7 @@ namespace Portfolio.Grass
                     ? $", blades {field.VisibleBlades}, chunks LOD0 {field.VisibleLod0} / LOD1 {field.VisibleLod1}"
                     : ""));
                 m_CaptureAt = -1f;
-                Invoke(nameof(Quit), 0.5f); // снимок пишется в конце кадра
+                Invoke(nameof(Quit), 0.5f);
             }
         }
 

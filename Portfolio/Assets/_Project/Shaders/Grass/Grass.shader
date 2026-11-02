@@ -1,8 +1,4 @@
-// Трава для мобильных: форма травинки задана геометрией, а не альфа-текстурой.
-// Шейдер непрозрачный, без alpha test: на TBDR GPU (Mali, Adreno, Apple) clip()
-// отключает раннюю проверку глубины и сильно повышает стоимость перерисовки.
-// Без ShadowCaster: трава только принимает тень, а не отбрасывает (минус проход
-// по тысячам травинок в shadow map). Жёсткие тени без soft-вариантов.
+// Специально без alpha clip: на мобильных TBDR clip() ломает early-z. Форма травинки задана геометрией.
 Shader "Portfolio/Grass"
 {
     Properties
@@ -56,7 +52,7 @@ Shader "Portfolio/Grass"
                 float4 positionCS : SV_POSITION;
                 float3 positionWS : TEXCOORD0;
                 half3 normalWS : TEXCOORD1;
-                half4 data : TEXCOORD2;     // x — высота, yz — случайные, w — туман
+                half4 data : TEXCOORD2;
                 half patch : TEXCOORD3;
             };
 
@@ -79,22 +75,18 @@ Shader "Portfolio/Grass"
                 half height = input.data.x;
                 half2 random = input.data.yz;
 
-                // Цвет: корень → кончик, часть травинок подсохшая, разброс яркости.
                 half3 albedo = lerp(_RootColor.rgb, _TipColor.rgb, height);
                 half dry = step(1.0h - _DryAmount, random.x) * height;
                 albedo = lerp(albedo, _DryColor.rgb, dry);
                 albedo *= 1.0h + (random.y - 0.5h) * _ColorVariation;
-                // Крупные пятна: высокие поляны светлее и сочнее, низкие — темнее.
                 albedo *= lerp(0.8h, 1.15h, input.patch);
 
                 Light light = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 half shadow = light.shadowAttenuation * light.distanceAttenuation;
                 half3 normal = normalize(input.normalWS);
 
-                // Wrap-освещение мягче Ламберта: трава не чернеет на теневой стороне.
                 half wrap = saturate(dot(normal, light.direction) * 0.5h + 0.5h);
 
-                // Просвет против солнца: дешёвая замена subsurface scattering, сильнее у кончиков.
                 half3 viewDirection = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 half back = saturate(dot(viewDirection, -light.direction));
                 back *= back * height * _Translucency;
@@ -108,7 +100,6 @@ Shader "Portfolio/Grass"
             ENDHLSL
         }
 
-        // Нужен для depth prepass / depth priming (PC-рендерер) и для depth texture.
         Pass
         {
             Name "DepthOnly"

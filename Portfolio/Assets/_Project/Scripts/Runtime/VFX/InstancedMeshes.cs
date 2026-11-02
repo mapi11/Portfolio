@@ -7,11 +7,9 @@ namespace Portfolio.VFX
         static Mesh s_Decal;
         static Mesh s_Tracer;
 
-        /// <summary>Квад в плоскости XY, лицевая сторона смотрит в -Z (как у встроенного Quad).</summary>
         public static Mesh Decal => s_Decal ??= Create("Decal",
             new[] { new Vector3(-0.5f, -0.5f, 0), new Vector3(0.5f, -0.5f, 0), new Vector3(-0.5f, 0.5f, 0), new Vector3(0.5f, 0.5f, 0) });
 
-        /// <summary>Квад в плоскости XZ от z=0 до z=1: растягивается по длине трассера.</summary>
         public static Mesh Tracer => s_Tracer ??= Create("Tracer",
             new[] { new Vector3(-0.5f, 0, 0), new Vector3(0.5f, 0, 0), new Vector3(-0.5f, 0, 1), new Vector3(0.5f, 0, 1) });
 

@@ -4,24 +4,16 @@ using UnityEngine.Rendering;
 
 namespace Portfolio.Editor.Winter
 {
-    /// <summary>
-    /// Процедурная геометрия зимней поляны. Цвет хранится в vertex color (альфа — где
-    /// может лежать снег), поэтому вся сцена обходится парой материалов без текстур альбедо.
-    /// </summary>
     static class WinterMeshGenerator
     {
-        // --- Рельеф и русло ---
-
         public const float IceLevel = -0.3f;
         const float RiverHalfWidth = 2.6f;
         const float BankWidth = 2.2f;
 
-        /// <summary>Центр русла: река петляет вдоль оси X.</summary>
         public static float RiverZ(float x) => Mathf.Sin(x * 0.11f) * 3.2f + Mathf.Sin(x * 0.043f + 1.3f) * 2f - 4f;
 
         public static float DistanceToRiver(float x, float z)
         {
-            // Поправка на наклон русла: расстояние по нормали, а не по оси Z.
             var slope = (RiverZ(x + 0.1f) - RiverZ(x - 0.1f)) / 0.2f;
             return Mathf.Abs(z - RiverZ(x)) / Mathf.Sqrt(1f + slope * slope);
         }
@@ -29,7 +21,6 @@ namespace Portfolio.Editor.Winter
         public static float Height(float x, float z)
         {
             var hills = (Fbm(x * 0.035f + 11f, z * 0.035f + 5f) - 0.45f) * 2.2f;
-            // Вдали от поляны рельеф поднимается: сцена «в чаше», горизонт закрыт сугробами.
             var bowl = Mathf.Max(0f, new Vector2(x, z * 1.2f).magnitude - 22f) * 0.12f;
             var distance = DistanceToRiver(x, z);
             var bank = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(RiverHalfWidth * 0.75f, RiverHalfWidth + BankWidth, distance));
@@ -50,7 +41,6 @@ namespace Portfolio.Editor.Winter
                 var px = x * step - half;
                 var pz = z * step - half;
                 vertices[z * count + x] = new Vector3(px, Height(px, pz), pz);
-                // Склоны русла — тёмная мёрзлая земля под снегом: виден, где снег не удержался.
                 colors[z * count + x] = new Color(0.42f, 0.36f, 0.33f, 1f);
             }
 
@@ -72,7 +62,6 @@ namespace Portfolio.Editor.Winter
             var vertices = new List<Vector3>();
             var uvs = new List<Vector2>();
             var indices = new List<int>();
-            // Лёд чуть шире видимого русла: края уходят под снежные берега.
             var halfWidth = RiverHalfWidth + 0.9f;
             const int across = 6;
 
@@ -108,8 +97,6 @@ namespace Portfolio.Editor.Winter
             mesh.RecalculateBounds();
         }
 
-        // --- Ёлка ---
-
         public static void Pine(Mesh mesh, int seed)
         {
             var random = new System.Random(seed);
@@ -119,11 +106,8 @@ namespace Portfolio.Editor.Winter
             var colors = new List<Color>();
             var indices = new List<int>();
 
-            // Ствол: короткий конус, видна только нижняя часть.
             AddCylinder(vertices, normals, colors, indices, 0.34f, 0.08f, 6.5f, 9, new Color(0.42f, 0.27f, 0.18f, 0f));
 
-            // Ярусы: волнистый край и нормали, «раздутые» от центра яруса, —
-            // toon-свет ложится мягкими пятнами, как на нарисованной ёлке.
             const int tiers = 5;
             for (var t = 0; t < tiers; t++)
             {
@@ -158,7 +142,6 @@ namespace Portfolio.Editor.Winter
                     var wave = Mathf.Sin(angle * 7f + phase);
                     var rimRadius = radius * (1f + 0.1f * wave);
                     var radial = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
-                    // Край яруса провисает и загибается вниз (форма «лапы»).
                     var droop = t * t * (0.35f + 0.12f * wave);
                     var position = apex + radial * (rimRadius * t) + Vector3.down * (height * t + droop);
                     var cone = (radial * height + Vector3.up * radius).normalized;
@@ -179,7 +162,6 @@ namespace Portfolio.Editor.Winter
                 indices.AddRange(new[] { a, a + 1, b, a + 1, b + 1, b });
             }
 
-            // Низ яруса: тёмный конус от края к стволу, снега на нём нет.
             var rimStart = start + rings * (segments + 1);
             var underApex = vertices.Count;
             vertices.Add(new Vector3(0f, baseY + 0.25f, 0f));
@@ -221,8 +203,6 @@ namespace Portfolio.Editor.Winter
             }
         }
 
-        // --- Камни ---
-
         public static void Rock(Mesh mesh, int seed)
         {
             var random = new System.Random(seed);
@@ -238,7 +218,7 @@ namespace Portfolio.Editor.Winter
                 var v = vertices[i];
                 var n = Mathf.PerlinNoise(v.x * 1.8f + offset.x, v.z * 1.8f + v.y * 1.3f + offset.y);
                 var p = v * (0.8f + n * 0.45f);
-                p.y = p.y > 0f ? p.y * 0.65f : p.y * 0.3f; // приплюснутый, вросший в землю
+                p.y = p.y > 0f ? p.y * 0.65f : p.y * 0.3f;
                 vertices[i] = p;
                 colors.Add(new Color(tint.r, tint.g, tint.b, 1f));
             }
@@ -287,8 +267,6 @@ namespace Portfolio.Editor.Winter
             }
         }
 
-        // --- Трава, торчащая из снега (статичная, один меш на всю поляну) ---
-
         public static void GrassTufts(Mesh mesh, IList<Vector3> positions, int seed)
         {
             var random = new System.Random(seed);
@@ -330,7 +308,6 @@ namespace Portfolio.Editor.Winter
                         var halfWidth = width * 0.5f * (1f - t);
                         vertices.Add(center - right * halfWidth);
                         vertices.Add(center + right * halfWidth);
-                        // Нормали вверх: мультяшная трава освещается ровно, без мерцания граней.
                         normals.Add(Vector3.up);
                         normals.Add(Vector3.up);
                         colors.Add(color);
@@ -339,7 +316,6 @@ namespace Portfolio.Editor.Winter
                     for (var s = 0; s < segments - 1; s++)
                     {
                         var a = start + s * 2;
-                        // Обе стороны: у toon-шейдера Cull Back, травинка видна с любой стороны.
                         indices.AddRange(new[] { a, a + 2, a + 1, a + 1, a + 2, a + 3, a, a + 1, a + 2, a + 1, a + 3, a + 2 });
                     }
                     var last = start + (segments - 1) * 2;
@@ -349,8 +325,6 @@ namespace Portfolio.Editor.Winter
 
             Apply(mesh, vertices.ToArray(), colors.ToArray(), indices.ToArray(), normals.ToArray());
         }
-
-        // --- Общее ---
 
         static void Apply(Mesh mesh, IList<Vector3> vertices, IList<Color> colors, IList<int> indices, IList<Vector3> normals)
         {

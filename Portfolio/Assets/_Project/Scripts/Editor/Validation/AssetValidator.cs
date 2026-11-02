@@ -23,10 +23,6 @@ namespace Portfolio.Editor.Validation
         public override string ToString() => $"[{severity}] {assetPath}: {message}";
     }
 
-    /// <summary>
-    /// Проверки ассетов против <see cref="AssetBudgets"/>. Используется из импорта,
-    /// из окна валидации и из batchmode (CI).
-    /// </summary>
     public static class AssetValidator
     {
         public static List<Issue> ValidateFolder(string folder)
@@ -126,7 +122,6 @@ namespace Portfolio.Editor.Validation
             if (mesh == null)
                 return;
 
-            // Веса нечитаемого меша недоступны вне импорта — проверяем настройку импортера.
             if (!mesh.isReadable)
             {
                 if (AssetImporter.GetAtPath(path) is ModelImporter importer &&

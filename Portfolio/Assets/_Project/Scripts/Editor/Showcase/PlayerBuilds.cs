@@ -4,10 +4,6 @@ using UnityEngine;
 
 namespace Portfolio.Editor.Showcase
 {
-    /// <summary>
-    /// Билды отдельных демо-сцен для замеров. Batchmode:
-    /// -executeMethod Portfolio.Editor.Showcase.PlayerBuilds.Windows (или WindowsGrass, Android, AndroidGrass)
-    /// </summary>
     public static class PlayerBuilds
     {
         const string WeaponRange = "Assets/_Project/Scenes/WeaponRange.unity";

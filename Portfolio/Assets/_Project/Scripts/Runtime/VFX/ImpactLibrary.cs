@@ -3,10 +3,6 @@ using UnityEngine;
 
 namespace Portfolio.VFX
 {
-    /// <summary>
-    /// Эффекты попаданий по типам поверхностей. Художник меняет эффекты здесь,
-    /// не трогая код оружия.
-    /// </summary>
     [CreateAssetMenu(menuName = "Portfolio/Impact Library", fileName = "ImpactLibrary")]
     public class ImpactLibrary : ScriptableObject
     {

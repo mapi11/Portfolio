@@ -3,15 +3,6 @@ using UnityEngine;
 
 namespace Portfolio.Editor.Grass
 {
-    /// <summary>
-    /// Меш чанка травы: травинки из нескольких сегментов, сужающиеся к кончику,
-    /// с изгибом вперёд. Каждой вершине записываются корень травинки и два случайных
-    /// числа (TEXCOORD1) — шейдеру хватает этого для ветра, цвета и исчезновения,
-    /// без текстур и без поиска данных по ID.
-    ///
-    /// LOD1 — каждая N-я травинка того же распределения, шире и из одного треугольника:
-    /// переход между LOD читается как разрежение, а не как смена поля.
-    /// </summary>
     static class GrassMeshGenerator
     {
         public struct Settings
@@ -35,7 +26,6 @@ namespace Portfolio.Editor.Grass
             public Vector4 data;
         }
 
-        /// <returns>Число травинок в LOD0 и LOD1.</returns>
         public static (int lod0, int lod1) Build(Mesh lod0, Mesh lod1, Settings settings, int lod1Step, float lod1WidthScale)
         {
             var blades = CreateBlades(settings);
@@ -47,9 +37,8 @@ namespace Portfolio.Editor.Grass
             var random = new System.Random(settings.seed);
             float Next() => (float)random.NextDouble();
 
-            // Jittered grid: равномерное покрытие без проплешин и сгустков. Сетка
-            // заполняется целиком, иначе у края каждого чанка остаётся пустая полоса.
             var grid = Mathf.Max(1, Mathf.RoundToInt(Mathf.Sqrt(settings.blades)));
+            // сетку заполняем целиком, иначе у края каждого чанка пустая полоса
             var count = grid * grid;
             var cell = settings.chunkSize / grid;
             var half = settings.chunkSize * 0.5f;
@@ -72,8 +61,6 @@ namespace Portfolio.Editor.Grass
                 });
             }
 
-            // Перемешиваем порядок: LOD1 берёт каждую N-ю травинку, и это должна быть
-            // случайная выборка по всему чанку, а не регулярные столбцы сетки.
             for (var i = result.Count - 1; i > 0; i--)
             {
                 var j = random.Next(i + 1);

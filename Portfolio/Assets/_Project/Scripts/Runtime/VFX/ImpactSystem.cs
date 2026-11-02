@@ -3,10 +3,6 @@ using UnityEngine;
 
 namespace Portfolio.VFX
 {
-    /// <summary>
-    /// Попадания: по одному экземпляру <see cref="BurstEffect"/> на поверхность
-    /// (создаются заранее в Awake) плюс декаль.
-    /// </summary>
     public class ImpactSystem : MonoBehaviour
     {
         public ImpactLibrary library;

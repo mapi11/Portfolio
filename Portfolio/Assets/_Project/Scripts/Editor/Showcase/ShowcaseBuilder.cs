@@ -12,12 +12,6 @@ using static Portfolio.Editor.Showcase.VfxTextureGenerator;
 
 namespace Portfolio.Editor.Showcase
 {
-    /// <summary>
-    /// Собирает тир для отладки VFX стрельбы: временные текстуры, материалы, префабы
-    /// эффектов, библиотеку попаданий и сцену с заглушкой оружия. Повторный запуск
-    /// перезаписывает сгенерированные ассеты, поэтому ручные правки делаются в копиях.
-    /// Batchmode: -executeMethod Portfolio.Editor.Showcase.ShowcaseBuilder.Build
-    /// </summary>
     public static class ShowcaseBuilder
     {
         const string Root = "Assets/_Project";
@@ -63,8 +57,6 @@ namespace Portfolio.Editor.Showcase
             Debug.Log("Weapon range built: " + ScenePath);
         }
 
-        // --- Эффекты ---
-
         static GameObject BuildMuzzle(Material flash, Material spark, Material smoke)
         {
             var root = new GameObject("FX_Muzzle_AR");
@@ -76,7 +68,6 @@ namespace Portfolio.Editor.Showcase
             var puff = Part(root, "Smoke", smoke, true, 0.35f, 0.6f, 0.8f, 1.6f, 0.04f, 0.06f, new Color(0.7f, 0.7f, 0.7f, 0.12f), cone: 15f);
             Grow(puff, 2.5f);
             Drag(puff, 1.5f);
-            // Дым у дула — главный источник overdraw в FP: максимум одна частица на выстрел.
             return Burst(root, (core, 1, 1), (petals, 3, 4), (sparks, 3, 5), (puff, 0, 1));
         }
 
@@ -84,7 +75,6 @@ namespace Portfolio.Editor.Showcase
         {
             var root = new GameObject("FX_Impact_Metal");
             var hitFlash = Part(root, "Flash", flash, true, 0.03f, 0.05f, 0f, 0f, 0.25f, 0.35f, Color.white);
-            // Размеры с запасом: на 10–15 м искра тоньше 2 px пропадает на мобильном экране.
             var sparks = Part(root, "Sparks", spark, true, 0.12f, 0.3f, 3f, 9f, 0.02f, 0.035f, Color.white, gravity: 1.2f, cone: 45f);
             Stretch(sparks, 0.02f, 1f);
             var puff = Part(root, "Smoke", smoke, true, 0.4f, 0.7f, 0.2f, 0.6f, 0.06f, 0.1f, new Color(0.6f, 0.6f, 0.6f, 0.2f), cone: 30f);
@@ -124,7 +114,6 @@ namespace Portfolio.Editor.Showcase
             var system = go.AddComponent<ParticleSystem>();
             system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
-            // Система «играет» всегда, но сама не эмитит: частицы выпускает BurstEffect через Emit.
             var main = system.main;
             main.duration = 1f;
             main.loop = true;
@@ -222,8 +211,6 @@ namespace Portfolio.Editor.Showcase
             decalSize = new Vector2(sizeMin, sizeMax)
         };
 
-        // --- Материалы ---
-
         static Material VfxMaterial(string name, Texture2D atlas, int tile, Color tint, float additive, Shader shader = null)
         {
             var material = MaterialAsset(VfxMaterials + "/" + name + ".mat", shader ?? ParticleShader);
@@ -288,8 +275,6 @@ namespace Portfolio.Editor.Showcase
             return asset;
         }
 
-        // --- Сцена ---
-
         static void BuildScene(GameObject muzzlePrefab, ImpactLibrary library, Material tracerMaterial)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
@@ -303,7 +288,6 @@ namespace Portfolio.Editor.Showcase
             var polymer = LitMaterial(WeaponMaterials + "/M_Placeholder_Polymer.mat", new Color(0.2f, 0.19f, 0.17f), 0f, 0.3f);
             var brass = LitMaterial(VfxMaterials + "/M_Shell_Brass.mat", new Color(0.85f, 0.64f, 0.3f), 1f, 0.75f, instancing: true);
 
-            // Тир: камера в (0, 1.6, 0), мишени на 8–18 м по +Z.
             var environment = new GameObject("Environment").transform;
             Block(environment, "Floor", PrimitiveType.Plane, floor, SurfaceType.Concrete, new Vector3(0, 0, 18), new Vector3(3, 1, 4.5f));
             Block(environment, "Wall_Back", PrimitiveType.Cube, concrete, SurfaceType.Concrete, new Vector3(0, 2.5f, 24), new Vector3(16, 5, 0.5f));
@@ -331,9 +315,8 @@ namespace Portfolio.Editor.Showcase
 
             var volume = new GameObject("Global Volume").AddComponent<Volume>();
             volume.isGlobal = true;
-            volume.sharedProfile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/Settings/SampleSceneProfile.asset");
+            volume.sharedProfile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/_Project/Settings/SampleSceneProfile.asset");
 
-            // Камера и оружие.
             var camera = Object.FindFirstObjectByType<Camera>();
             camera.transform.SetPositionAndRotation(new Vector3(0, 1.6f, 0), Quaternion.identity);
             camera.fieldOfView = 70f;
@@ -348,7 +331,6 @@ namespace Portfolio.Editor.Showcase
             kickRoot.SetParent(weaponGo.transform, false);
             BuildPlaceholderWeapon(kickRoot, gunMetal, polymer);
 
-            // Имена сокетов — из Docs/RigRequirements.md.
             var muzzleSocket = Socket(kickRoot, "socket_muzzle", new Vector3(0, 0.012f, 0.47f));
             var shellSocket = Socket(kickRoot, "socket_shell_eject", new Vector3(0.03f, 0.02f, 0.04f));
             var muzzle = (GameObject)PrefabUtility.InstantiatePrefab(muzzlePrefab, muzzleSocket);
@@ -402,7 +384,7 @@ namespace Portfolio.Editor.Showcase
         {
             var go = GameObject.CreatePrimitive(type);
             go.name = name;
-            Object.DestroyImmediate(go.GetComponent<Collider>()); // иначе рейкаст попадёт в собственное оружие
+            Object.DestroyImmediate(go.GetComponent<Collider>());
             go.transform.SetParent(parent, false);
             go.transform.SetLocalPositionAndRotation(position, Quaternion.Euler(euler));
             go.transform.localScale = scale;

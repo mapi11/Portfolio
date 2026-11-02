@@ -1,5 +1,3 @@
-// Частицы: атлас + vertex color + HDR-тинт. Без освещения, без soft particles
-// (на mobile им нужна depth texture, а это лишний проход).
 Shader "Portfolio/VFX/Particle"
 {
     Properties

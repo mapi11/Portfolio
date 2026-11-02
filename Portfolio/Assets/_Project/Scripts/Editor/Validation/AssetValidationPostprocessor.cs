@@ -5,10 +5,6 @@ using UnityEngine;
 
 namespace Portfolio.Editor.Validation
 {
-    /// <summary>
-    /// Применяет настройки импорта по соглашениям об именах и сразу показывает
-    /// нарушения бюджетов в консоли — художник видит ошибку до коммита.
-    /// </summary>
     public class AssetValidationPostprocessor : AssetPostprocessor
     {
         void OnPreprocessTexture()
@@ -21,7 +17,6 @@ namespace Portfolio.Editor.Validation
             var importer = (TextureImporter)assetImporter;
             var name = Path.GetFileNameWithoutExtension(assetPath);
 
-            // Только для первого импорта: ручные правки художника не перетираем.
             if (!importer.importSettingsMissing)
                 return;
 
@@ -39,7 +34,6 @@ namespace Portfolio.Editor.Validation
                     var settings = importer.GetPlatformTextureSettings(platform);
                     settings.overridden = true;
                     settings.maxTextureSize = rule.maxTextureSize;
-                    // Нормали теряют больше на крупных блоках, поэтому им блок поменьше.
                     settings.format = importer.textureType == TextureImporterType.NormalMap
                         ? TextureImporterFormat.ASTC_4x4
                         : TextureImporterFormat.ASTC_6x6;

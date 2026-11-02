@@ -3,10 +3,6 @@ using UnityEngine.Rendering;
 
 namespace Portfolio.VFX
 {
-    /// <summary>
-    /// Трассеры как квады, развёрнутые к камере вокруг оси полёта. Без LineRenderer
-    /// и без GameObject на пулю: все трассеры — один instanced draw call.
-    /// </summary>
     public class TracerSystem : MonoBehaviour
     {
         public Material material;
@@ -44,7 +40,7 @@ namespace Portfolio.VFX
         public void Fire(Vector3 from, Vector3 to)
         {
             if (m_Count == m_Tracers.Length)
-                return; // бюджет исчерпан: пропускаем трассер, а не выделяем память
+                return;
 
             var delta = to - from;
             m_Tracers[m_Count++] = new Tracer
@@ -73,8 +69,7 @@ namespace Portfolio.VFX
                 var tail = Mathf.Max(0f, tracer.travelled - length);
                 if (tail >= tracer.distance)
                 {
-                    // Удаление обменом с последним: порядок не важен, без сдвигов массива.
-                    // Последний уже обработан в этом кадре (идём с конца), берём и его матрицу.
+                    // идём с конца, последний уже обработан в этом кадре, забираем и его матрицу
                     m_Count--;
                     m_Tracers[i] = m_Tracers[m_Count];
                     m_Matrices[i] = m_Matrices[m_Count];
@@ -84,7 +79,6 @@ namespace Portfolio.VFX
                 var head = Mathf.Min(tracer.travelled, tracer.distance);
                 var tailPosition = tracer.start + tracer.direction * tail;
 
-                // Плоскость квада (локальная XZ) поворачивается нормалью (Y) к камере.
                 var toCamera = cameraPosition - tailPosition;
                 var up = toCamera - tracer.direction * Vector3.Dot(toCamera, tracer.direction);
                 if (up.sqrMagnitude < 1e-6f)

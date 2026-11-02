@@ -6,19 +6,12 @@ using UnityEngine.InputSystem;
 
 namespace Portfolio.Diagnostics
 {
-    /// <summary>
-    /// Повторяемый сценарий для замеров из Docs/Profiling.md: 30 с непрерывной стрельбы
-    /// с проводкой прицела по всем мишеням. Запуск: кнопка в HUD, клавиша B
-    /// или аргумент командной строки -benchmark (тогда приложение закроется по окончании).
-    /// </summary>
     public class Benchmark : MonoBehaviour
     {
         public WeaponController weapon;
         public FirstPersonLook look;
-        [Tooltip("Необязательно: показывать число декалей в HUD")]
         public DecalSystem decals;
         public float duration = 30f;
-        [Tooltip("Амплитуда проводки прицела, градусы (рыскание, тангаж)")]
         public Vector2 sweep = new(35f, 6f);
         public float sweepSpeed = 0.35f;
         public bool showHud = true;
@@ -37,7 +30,6 @@ namespace Portfolio.Diagnostics
 
         void Start()
         {
-            // -benchmark [-benchmark-duration 30] [-screenshot path.png]
             var args = Environment.GetCommandLineArgs();
             if (Array.IndexOf(args, "-benchmark") < 0)
                 return;
@@ -100,7 +92,6 @@ namespace Portfolio.Diagnostics
             look.Yaw = m_StartAngles.x + Mathf.Sin(t * sweepSpeed * Mathf.PI * 2f) * sweep.x;
             look.Pitch = m_StartAngles.y + Mathf.Sin(t * sweepSpeed * Mathf.PI * 4f) * sweep.y;
 
-            // Кадр для README/breakdown: середина очереди, когда на сцене уже есть декали и гильзы.
             if (!string.IsNullOrEmpty(m_ScreenshotPath) && t >= duration * 0.4f)
             {
                 ScreenCapture.CaptureScreenshot(m_ScreenshotPath);

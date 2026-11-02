@@ -4,13 +4,9 @@ using UnityEngine;
 
 namespace Portfolio.Editor.Validation
 {
-    /// <summary>
-    /// Точка входа для CI:
-    /// Unity -batchmode -nographics -projectPath Portfolio -executeMethod Portfolio.Editor.Validation.AssetValidationCI.Run -quit
-    /// Код выхода 1, если есть ошибки (предупреждения сборку не валят).
-    /// </summary>
     public static class AssetValidationCI
     {
+        // Unity -batchmode -nographics -projectPath Portfolio -executeMethod Portfolio.Editor.Validation.AssetValidationCI.Run -quit
         public static void Run()
         {
             var issues = AssetValidator.ValidateFolder("Assets/_Project/Art");

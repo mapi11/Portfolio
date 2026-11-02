@@ -2,9 +2,6 @@ using UnityEngine;
 
 namespace Portfolio.Diagnostics
 {
-    /// <summary>
-    /// Время кадра за скользящее окно: среднее и 1 % low. Без аллокаций в Update.
-    /// </summary>
     public class FrameStats
     {
         readonly float[] m_Samples;
@@ -42,7 +39,6 @@ namespace Portfolio.Diagnostics
             }
         }
 
-        /// <summary>FPS по худшему 1 % кадров (среднее время самых долгих кадров).</summary>
         public float OnePercentLowFps
         {
             get

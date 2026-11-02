@@ -3,9 +3,6 @@ using UnityEngine.InputSystem;
 
 namespace Portfolio.Grass
 {
-    /// <summary>
-    /// Камера для демо-сцен: медленно облетает точку, ЛКМ/палец — вращать, колесо — приблизить.
-    /// </summary>
     public class OrbitCamera : MonoBehaviour
     {
         public Vector3 target = new(0f, 0.4f, 0f);

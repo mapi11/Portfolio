@@ -9,18 +9,13 @@ using UnityEngine.Rendering.Universal;
 
 namespace Portfolio.Editor.Grass
 {
-    /// <summary>
-    /// Собирает сцену с полем травы: меши чанка (LOD0/LOD1), шум ветра, материал, сцену.
-    /// Повторный запуск перезаписывает сгенерированное, GUID ассетов сохраняются.
-    /// Batchmode: -executeMethod Portfolio.Editor.Grass.GrassSceneBuilder.Build
-    /// </summary>
     public static class GrassSceneBuilder
     {
         const string Root = "Assets/_Project/Art/Grass";
         const string ScenePath = "Assets/_Project/Scenes/GrassField.unity";
 
         const float ChunkSize = 4f;
-        const int Lod0Blades = 729; // 27 x 27, сетка заполняется целиком
+        const int Lod0Blades = 729;
         const int Lod1Step = 4;
 
         [MenuItem("Tools/Portfolio/Build Grass Field")]
@@ -54,7 +49,6 @@ namespace Portfolio.Editor.Grass
             grass.SetFloat("_Translucency", 2f);
             grass.SetFloat("_PatchScale", 0.025f);
             grass.SetFloat("_PatchMinHeight", 0.5f);
-            // Земля в тон середины травинок: просветы между ними не читаются как дыры.
             var ground = MaterialAsset("Assets/_Project/Art/Environment/Materials/M_Env_Ground.mat", Shader.Find("Universal Render Pipeline/Lit"));
             ground.SetColor("_BaseColor", new Color(0.3f, 0.4f, 0.12f));
             ground.SetFloat("_Smoothness", 0.05f);
@@ -101,7 +95,6 @@ namespace Portfolio.Editor.Grass
             ball.GetComponent<MeshRenderer>().sharedMaterial = ballMaterial;
             ball.AddComponent<GrassInteractor>().radius = 0.8f;
 
-            // Низкое солнце: на облёте камера то по свету, то против него — виден просвет травинок.
             var light = Object.FindFirstObjectByType<Light>();
             light.transform.rotation = Quaternion.Euler(20f, -140f, 0f);
             light.color = new Color(1f, 0.9f, 0.75f);
@@ -110,14 +103,13 @@ namespace Portfolio.Editor.Grass
 
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            // Туман догоняет исчезновение травы: граница дальности растворяется в дымке.
             RenderSettings.fogStartDistance = 25f;
             RenderSettings.fogEndDistance = 95f;
             RenderSettings.fogColor = new Color(0.62f, 0.7f, 0.76f);
 
             var volume = new GameObject("Global Volume").AddComponent<Volume>();
             volume.isGlobal = true;
-            volume.sharedProfile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/Settings/SampleSceneProfile.asset");
+            volume.sharedProfile = AssetDatabase.LoadAssetAtPath<VolumeProfile>("Assets/_Project/Settings/SampleSceneProfile.asset");
 
             var camera = Object.FindFirstObjectByType<Camera>();
             camera.farClipPlane = 150f;
@@ -135,7 +127,6 @@ namespace Portfolio.Editor.Grass
 
         static Texture2D CreateNoise(string path)
         {
-            // Тайлящийся шум: смешивание четырёх сдвинутых копий Perlin по весам.
             const int size = 128;
             const float frequency = 6f;
             var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
@@ -147,7 +138,6 @@ namespace Portfolio.Editor.Grass
                 var value = Mathf.Lerp(
                     Mathf.Lerp(Sample(0, 0), Sample(-1, 0), u),
                     Mathf.Lerp(Sample(0, -1), Sample(-1, -1), u), v);
-                // Растягиваем контраст: волны порывов читаются чётче.
                 value = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.25f, 0.75f, value));
                 texture.SetPixel(x, y, new Color(value, value, value, 1f));
             }
@@ -160,7 +150,7 @@ namespace Portfolio.Editor.Grass
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             importer.sRGBTexture = false;
             importer.wrapMode = TextureWrapMode.Repeat;
-            importer.mipmapEnabled = false; // выборка только в вершинном шейдере, mip 0
+            importer.mipmapEnabled = false; // читается только в вершинном шейдере
             importer.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }

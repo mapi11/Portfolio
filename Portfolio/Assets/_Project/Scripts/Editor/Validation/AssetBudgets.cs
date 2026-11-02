@@ -5,10 +5,6 @@ using UnityEngine;
 
 namespace Portfolio.Editor.Validation
 {
-    /// <summary>
-    /// Технические бюджеты на контент. Правило выбирается по папке ассета:
-    /// побеждает самое длинное совпадение пути (Weapons/AR01 точнее, чем Weapons).
-    /// </summary>
     [CreateAssetMenu(menuName = "Portfolio/Asset Budgets", fileName = "AssetBudgets")]
     public class AssetBudgets : ScriptableObject
     {
@@ -16,15 +12,12 @@ namespace Portfolio.Editor.Validation
         public class Rule
         {
             public string name = "Default";
-            [Tooltip("Часть пути ассета, например Assets/_Project/Art/Weapons")]
             public string folder = "Assets/_Project/Art";
 
             [Header("Геометрия")]
             public int maxTrianglesLod0 = 10000;
-            [Tooltip("0 = LODGroup не обязателен")]
             public int minLodCount = 0;
             [Range(0.1f, 1f)]
-            [Tooltip("Каждый следующий LOD должен быть не больше этой доли от предыдущего")]
             public float maxLodTriangleRatio = 0.6f;
             public int maxMaterialsPerRenderer = 2;
 
@@ -46,7 +39,6 @@ namespace Portfolio.Editor.Validation
         public string texturePrefix = "T_";
         public string materialPrefix = "M_";
 
-        [Tooltip("Суффиксы линейных (не sRGB) карт: упакованные каналы, нормали, маски")]
         public string[] linearSuffixes = { "_N", "_MRAO", "_ORM", "_Mask" };
         public string normalSuffix = "_N";
 
@@ -74,7 +66,6 @@ namespace Portfolio.Editor.Validation
             if (guids.Length > 0)
                 s_Cached = AssetDatabase.LoadAssetAtPath<AssetBudgets>(AssetDatabase.GUIDToAssetPath(guids[0]));
 
-            // Пока ассет с бюджетами не создан, работаем на значениях по умолчанию.
             if (s_Cached == null)
                 s_Cached = CreateInstance<AssetBudgets>();
             return s_Cached;

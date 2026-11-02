@@ -2,11 +2,6 @@ using UnityEngine;
 
 namespace Portfolio.Grass
 {
-    /// <summary>
-    /// Объект, который раздвигает траву (персонаж, мяч, машина). Один глобальный
-    /// вектор на кадр — стоимость на GPU: одна длина и одно деление на вершину.
-    /// Для демо может сам катиться по кругу.
-    /// </summary>
     public class GrassInteractor : MonoBehaviour
     {
         public float radius = 0.9f;
@@ -29,7 +24,6 @@ namespace Portfolio.Grass
                 position.y = transform.position.y;
                 transform.position = position;
 
-                // Катим шар: поворот вокруг оси, перпендикулярной движению.
                 var delta = position - previous;
                 var size = transform.lossyScale.x * 0.5f;
                 if (delta.sqrMagnitude > 1e-8f && size > 0f)

@@ -3,9 +3,6 @@ using UnityEngine;
 
 namespace Portfolio.Editor.Validation
 {
-    /// <summary>
-    /// Бюджеты из Docs/Budgets.md. Цель — mid/low Android (Mali-G52, 3 ГБ RAM), 60 fps.
-    /// </summary>
     public static class DefaultBudgets
     {
         const string Path = "Assets/_Project/Settings/AssetBudgets.asset";

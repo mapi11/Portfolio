@@ -5,11 +5,6 @@ using UnityEngine;
 
 namespace Portfolio.Editor.Showcase
 {
-    /// <summary>
-    /// Процедурные временные текстуры: атлас частиц 2x2 и атлас следов от пуль 2x2.
-    /// Белый цвет + маска в альфе: оттенок задаёт материал или цвет частицы.
-    /// Заменяются на текстуры из Substance Designer / EmberGen без изменений в материалах.
-    /// </summary>
     static class VfxTextureGenerator
     {
         public const int ParticleFlash = 0, ParticleSoft = 1, ParticleSmoke = 2, ParticleChip = 3;
@@ -67,20 +62,17 @@ namespace Portfolio.Editor.Showcase
             return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
-        /// <summary>Тайлинг материала под ячейку атласа 2x2 (0 — левая нижняя).</summary>
         public static void SetTile(Material material, int tile)
         {
             material.SetTextureScale("_BaseMap", new Vector2(0.5f, 0.5f));
             material.SetTextureOffset("_BaseMap", new Vector2(tile % 2 * 0.5f, tile / 2 * 0.5f));
         }
 
-        // --- Частицы ---
 
         static Color Flash(float u, float v)
         {
             var r = Mathf.Sqrt(u * u + v * v);
             var core = Mathf.Exp(-r * r * 10f);
-            // Лучи: крест + диагонали послабее, затухают к краю ячейки.
             var cross = Mathf.Exp(-Mathf.Abs(u) * 30f) * (1f - Mathf.Abs(v)) + Mathf.Exp(-Mathf.Abs(v) * 30f) * (1f - Mathf.Abs(u));
             var du = (u + v) * 0.7071f;
             var dv = (u - v) * 0.7071f;
@@ -102,7 +94,6 @@ namespace Portfolio.Editor.Showcase
             var r = Mathf.Sqrt(u * u + v * v);
             var noise = Fbm(u * 2.2f + 3.1f, v * 2.2f + 7.3f);
             var alpha = Mathf.SmoothStep(1f, 0f, Mathf.InverseLerp(0.2f, 1f, r + (noise - 0.5f) * 0.5f));
-            // Лёгкое затенение снизу даёт объём без освещения.
             var shade = Mathf.Lerp(0.75f, 1f, (v + 1f) * 0.5f);
             return new Color(shade, shade, shade, alpha * Mathf.Clamp01(noise * 1.6f - 0.1f));
         }
@@ -117,14 +108,12 @@ namespace Portfolio.Editor.Showcase
             return new Color(shade, shade, shade, alpha);
         }
 
-        // --- Следы от пуль (premultiplied в шейдере: тёмный цвет + альфа затемняют поверхность) ---
 
         static Color MetalHole(float u, float v)
         {
             var r = Mathf.Sqrt(u * u + v * v);
             if (r < 0.12f)
                 return new Color(0.02f, 0.02f, 0.02f, 1f);
-            // Сбитая краска: светлое кольцо голого металла с неровным краем.
             var ring = 0.24f + 0.06f * Mathf.PerlinNoise(Mathf.Atan2(v, u) * 2f + 10f, 0.5f);
             if (r < ring)
                 return new Color(0.78f, 0.78f, 0.8f, 0.95f);
@@ -141,11 +130,9 @@ namespace Portfolio.Editor.Showcase
                 return new Color(0.04f, 0.04f, 0.04f, 1f);
             if (r < 0.42f + jagged)
             {
-                // Скол: светлее основы, с шумом.
                 var n = Mathf.PerlinNoise(u * 8f + 30f, v * 8f + 30f);
                 return new Color(0.68f, 0.66f, 0.63f, Mathf.Lerp(0.5f, 0.9f, n));
             }
-            // Радиальные трещины.
             var crack = Mathf.Pow(Mathf.Abs(Mathf.Sin(angle * 3.5f + Mathf.PerlinNoise(r * 4f, angle) * 2f)), 40f);
             var fade = Mathf.Clamp01(1f - (r - 0.42f) / 0.5f);
             return new Color(0.08f, 0.08f, 0.08f, crack * fade * 0.8f + fade * fade * 0.15f);
@@ -156,11 +143,10 @@ namespace Portfolio.Editor.Showcase
             var r = Mathf.Sqrt(u * u + v * v);
             if (r < 0.1f)
                 return new Color(0.03f, 0.02f, 0.01f, 1f);
-            // Щепа вытянута вдоль волокон (ось V).
             var stretched = Mathf.Sqrt(u * u * 6f + v * v * 0.6f);
             var noise = Mathf.PerlinNoise(u * 12f + 50f, v * 2f + 50f);
             if (stretched < 0.55f + noise * 0.3f)
-                return new Color(0.78f, 0.6f, 0.4f, 0.9f); // свежая древесина светлее покрытия
+                return new Color(0.78f, 0.6f, 0.4f, 0.9f);
             var fade = Mathf.Clamp01(1f - (r - 0.3f) / 0.5f);
             return new Color(0.1f, 0.07f, 0.04f, fade * fade * 0.25f);
         }

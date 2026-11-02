@@ -1,7 +1,3 @@
-// Cartoon-лёд для мобильных: непрозрачный, без depth/opaque texture и без отражений.
-// Глубину изображают слои трещин и пузырьков, сдвинутые параллаксом от направления
-// взгляда (мировые XZ как UV — лёд горизонтальный, касательные не нужны).
-// Иней у берегов — по UV.y поперёк русла, который пишет генератор меша реки.
 Shader "Portfolio/Toon/Ice"
 {
     Properties
@@ -91,7 +87,7 @@ Shader "Portfolio/Toon/Ice"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS : NORMAL;
-                float2 uv : TEXCOORD0;      // x — метры вдоль русла, y — 0..1 поперёк
+                float2 uv : TEXCOORD0;
             };
 
             struct Varyings
@@ -121,29 +117,24 @@ Shader "Portfolio/Toon/Ice"
                 half3 normal = normalize(input.normalWS);
                 half3 view = GetWorldSpaceNormalizeViewDir(input.positionWS);
 
-                // Цвет толщи: на скользящих углах лёд светлее (как отражение неба).
                 half fresnel = pow(1.0h - saturate(dot(normal, view)), _FresnelPower);
                 half3 color = lerp(_DeepColor.rgb, _ShallowColor.rgb, saturate(fresnel + 0.2h));
 
-                // Параллакс: точка «под поверхностью» на глубине d видна смещённой
-                // против проекции взгляда. Три слоя на разной глубине дают объём.
                 float2 uv = input.positionWS.xz * _CrackScale;
+                // фейковая глубина: слои трещин сдвигаются против проекции взгляда
                 float2 parallax = -view.xz / max(view.y, 0.25h) * (_InnerDepth * _CrackScale);
                 half deep = Crack(uv * 1.7 + parallax * 2.0 + 0.37);
                 half middle = Crack(uv + parallax);
-                // Пузырьки островками: маска из крупного шума, иначе они рябят по всей реке.
                 half noise = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, input.positionWS.xz * 0.8).r;
                 half bubbleMask = smoothstep(0.55h, 0.75h, SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, input.positionWS.xz * 0.12).r);
                 half bubbles = SAMPLE_TEXTURE2D(_CrackMap, sampler_CrackMap, uv * 2.3 + parallax * 0.6).g * bubbleMask;
                 color += _CrackColor.rgb * (deep * 0.12h + middle * 0.3h) + bubbles * _BubbleStrength;
                 color = lerp(color, _FrostColor.rgb, Crack(uv * 0.6) * _SurfaceCrack);
 
-                // Мультяшные блики-полосы: пара диагональных белых штрихов, как на нарисованном льду.
                 half streakWave = sin(dot(input.positionWS.xz, float2(0.55, 0.35)) * _StreakFrequency + noise * 2.0h);
                 half streaks = smoothstep(0.86h, 0.9h, streakWave) + smoothstep(0.975h, 0.985h, streakWave) * 0.6h;
                 color += streaks * _StreakStrength * (0.4h + fresnel);
 
-                // Иней у берегов с рваным краем.
                 half bank = min(input.uv.y, 1.0h - input.uv.y) + (noise - 0.5h) * 0.08h;
                 half frost = 1.0h - smoothstep(_FrostWidth * 0.4h, _FrostWidth, bank);
                 color = lerp(color, _FrostColor.rgb, frost);
@@ -153,7 +144,6 @@ Shader "Portfolio/Toon/Ice"
                 half lit = saturate(dot(normal, light.direction)) > 0.0h ? shadow : 0.0h;
                 color *= lerp(_ShadowColor.rgb, 1.0h, lit) * light.color + SampleSH(normal) * _AmbientStrength;
 
-                // Мультяшный блик: жёсткая граница вместо плавного Блинн-Фонга.
                 half3 halfVector = normalize(light.direction + view);
                 half specular = pow(saturate(dot(normal, halfVector)), _Glossiness);
                 specular = smoothstep(_SpecThreshold - 0.03h, _SpecThreshold + 0.03h, specular) * lit * (1.0h - frost);

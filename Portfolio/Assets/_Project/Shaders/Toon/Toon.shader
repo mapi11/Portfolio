@@ -1,8 +1,3 @@
-// Cartoon-освещение для зимней сцены: ступенчатый свет с холодными тенями,
-// снег по нормали, rim и искрение снега. Цвет объекта — vertex color, поэтому
-// ёлка, камни и трава делят один материал (SRP Batcher, без текстур альбедо).
-// Альфа vertex color — где снег может лежать (0 — никогда, например под ветками).
-// Без keyword-ов: отключённая фича — это просто 0 в параметре.
 Shader "Portfolio/Toon/Lit"
 {
     Properties
@@ -120,15 +115,13 @@ Shader "Portfolio/Toon/Lit"
                 half3 view = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 half4 noise = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, input.positionWS.xz * _SnowNoiseScale);
 
-                // Снег: поверхности, смотрящие вверх, с рваным краем от шума.
                 half snowEdge = normal.y + (noise.r - 0.5h) * _SnowNoise;
                 half snow = smoothstep(_SnowThreshold - _SnowSmooth, _SnowThreshold + _SnowSmooth, snowEdge);
+                // альфа vertex color: может ли тут лежать снег (ствол, низ веток = 0)
                 snow *= _SnowAmount * input.color.a;
-                // Лёгкие перепады тона снега (сугробы, наметы) — без этого снег читается плоским листом.
                 half3 snowColor = _SnowColor.rgb * lerp(1.0h - _SnowVariation, 1.0h, noise.r);
                 half3 albedo = lerp(input.color.rgb * _BaseColor.rgb, snowColor, snow);
 
-                // Ступенчатый свет: тень не чёрная, а тонирована холодным цветом.
                 Light light = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 half shadow = light.shadowAttenuation * light.distanceAttenuation;
                 half ramp = smoothstep(_RampThreshold - _RampSmooth, _RampThreshold + _RampSmooth, dot(normal, light.direction));
@@ -136,12 +129,9 @@ Shader "Portfolio/Toon/Lit"
                 half3 lighting = lerp(_ShadowColor.rgb, 1.0h, ramp) * light.color + SampleSH(normal) * _AmbientStrength;
                 half3 color = albedo * lighting;
 
-                // Rim по освещённой стороне — мягкий контур, как в мультфильмах.
                 half rim = pow(1.0h - saturate(dot(normal, view)), _RimPower) * _RimStrength;
                 color += _RimColor.rgb * rim * (0.35h + 0.65h * ramp);
 
-                // Искрение снега: два слоя белого шума, второй сдвигается от взгляда —
-                // искры вспыхивают и гаснут при движении камеры.
                 float2 sparkleUV = input.positionWS.xz * _SparkleScale;
                 half sparkleA = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, sparkleUV).g;
                 half sparkleB = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, sparkleUV * 1.37 + view.xz * 0.35).g;

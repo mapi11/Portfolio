@@ -4,18 +4,11 @@ using UnityEngine.InputSystem;
 
 namespace Portfolio.Weapon
 {
-    /// <summary>
-    /// Автоматическая стрельба хитсканом. Оружие только сообщает о событиях
-    /// (выстрел, попадание) системам VFX, сами эффекты настраиваются в их ассетах.
-    /// Сокеты называются как в Docs/RigRequirements.md, поэтому заглушку можно
-    /// заменить на модель с ригом без изменений в коде.
-    /// </summary>
     public class WeaponController : MonoBehaviour
     {
         [Header("Сокеты")]
         public Transform muzzleSocket;
         public Transform shellSocket;
-        [Tooltip("Модель, которая откатывается при отдаче")]
         public Transform kickRoot;
 
         [Header("Стрельба")]
@@ -23,7 +16,6 @@ namespace Portfolio.Weapon
         public float roundsPerMinute = 700f;
         public float range = 150f;
         public float spreadDegrees = 0.5f;
-        [Tooltip("Трассер на каждый N-й выстрел, как в реальных магазинах")]
         public int tracerEvery = 2;
         public LayerMask hitMask = ~0;
 
@@ -40,7 +32,6 @@ namespace Portfolio.Weapon
         public float kickPitch = 3f;
         public float kickReturnSpeed = 20f;
 
-        /// <summary>Внешнее удержание спуска (бенчмарк).</summary>
         public bool TriggerOverride { get; set; }
         public int ShotsFired { get; private set; }
 
@@ -70,8 +61,7 @@ namespace Portfolio.Weapon
             m_Cooldown -= Time.deltaTime;
             if (TriggerHeld)
             {
-                // Несколько выстрелов за кадр при низком FPS: темп стрельбы не зависит от кадра.
-                // Предел на кадр — защита от пачки выстрелов после фриза (загрузка, пауза).
+                // не больше 3 выстрелов за кадр, иначе после фриза вылетает очередь
                 for (var shots = 0; m_Cooldown <= 0f && shots < 3; shots++)
                 {
                     Fire();

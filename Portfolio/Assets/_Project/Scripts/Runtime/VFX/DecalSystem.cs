@@ -4,26 +4,11 @@ using UnityEngine.Rendering;
 
 namespace Portfolio.VFX
 {
-    /// <summary>
-    /// Следы от пуль: общий кольцевой буфер на все поверхности с жёстким лимитом
-    /// и временем жизни. Отрисовка через Graphics.RenderMeshInstanced: все декали
-    /// одной поверхности — один draw call, без GameObject-ов и без URP Decal Projector
-    /// (он дорог на мобильных: нужен depth prepass или DBuffer).
-    ///
-    /// Затухание — instanced-свойство _FadeOut, поэтому исчезающие декали
-    /// не ломают инстансинг и не требуют отдельных материалов.
-    ///
-    /// Ограничение: только статичная геометрия, к движущимся объектам декали не крепятся.
-    /// </summary>
     public class DecalSystem : MonoBehaviour
     {
-        [Tooltip("Максимум декалей на сцене (все поверхности вместе). Новая вытесняет самую старую")]
         [Range(1, 64)] public int maxDecals = 15;
-        [Tooltip("Сколько секунд декаль живёт, включая затухание")]
         public float lifetime = 10f;
-        [Tooltip("Длительность затухания в конце жизни")]
         public float fadeDuration = 2f;
-        [Tooltip("Отступ от поверхности против z-fighting (вместе с Offset в шейдере)")]
         public float surfaceOffset = 0.002f;
 
         static readonly int s_FadeOut = Shader.PropertyToID("_FadeOut");
@@ -59,7 +44,6 @@ namespace Portfolio.VFX
             if (material == null)
                 return;
 
-            // Случайный поворот вокруг нормали: одна текстура не выглядит повторяющейся.
             var rotation = Quaternion.LookRotation(-normal) * Quaternion.Euler(0, 0, Random.Range(0f, 360f));
             m_Decals[m_Next] = new Decal
             {
@@ -110,7 +94,7 @@ namespace Portfolio.VFX
             if (m_Batches.TryGetValue(material, out var batch))
                 return batch;
 
-            // Массивы на полный лимит: Unity фиксирует размер массива свойства при первой установке.
+            // Unity фиксирует размер массива свойства при первом SetFloatArray, поэтому сразу под максимум
             var properties = new MaterialPropertyBlock();
             batch = new Batch
             {

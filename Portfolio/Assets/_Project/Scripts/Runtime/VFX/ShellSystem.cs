@@ -3,17 +3,12 @@ using UnityEngine.Rendering;
 
 namespace Portfolio.VFX
 {
-    /// <summary>
-    /// Гильзы без Rigidbody: простая баллистика с одним рейкастом на гильзу за кадр
-    /// и отскоком от поверхности. Отрисовка — один instanced draw call.
-    /// </summary>
     public class ShellSystem : MonoBehaviour
     {
         public Mesh mesh;
         public Material material;
         public int capacity = 24;
         public float lifetime = 2.5f;
-        [Tooltip("Для встроенного Cylinder (высота 2, диаметр 1): гильза 5.56 — 9.5 x 45 мм")]
         public Vector3 scale = new(0.0095f, 0.0225f, 0.0095f);
         public Vector2 ejectSpeed = new(1.6f, 2.4f);
         [Range(0f, 1f)] public float bounce = 0.35f;
@@ -47,10 +42,8 @@ namespace Portfolio.VFX
             };
         }
 
-        /// <param name="socket">socket_shell_eject: +X — направление выброса, +Z — вдоль ствола.</param>
         public void Eject(Transform socket, Vector3 inheritedVelocity)
         {
-            // Вправо-вверх и чуть вперёд: гильза уходит из кадра, а не летит в камеру.
             var direction = (socket.right + socket.up * 0.5f + socket.forward * Random.Range(0.2f, 0.5f)).normalized;
             m_Shells[m_Next] = new Shell
             {
@@ -88,7 +81,6 @@ namespace Portfolio.VFX
                         shell.angularVelocity *= 0.5f;
                         if (shell.velocity.sqrMagnitude < 0.25f)
                         {
-                            // Укладываем гильзу на бок: ось цилиндра (локальная Y) — вдоль поверхности.
                             shell.resting = true;
                             var along = Vector3.ProjectOnPlane(shell.rotation * Vector3.up, hit.normal);
                             if (along.sqrMagnitude < 1e-4f)

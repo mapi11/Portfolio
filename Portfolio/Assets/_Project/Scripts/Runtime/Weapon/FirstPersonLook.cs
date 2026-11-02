@@ -3,10 +3,6 @@ using UnityEngine.InputSystem;
 
 namespace Portfolio.Weapon
 {
-    /// <summary>
-    /// Обзор камерой (ПКМ + мышь или перетаскивание пальцем) и отдача камеры,
-    /// которая плавно возвращается к точке прицеливания.
-    /// </summary>
     public class FirstPersonLook : MonoBehaviour
     {
         public float mouseSensitivity = 0.12f;
