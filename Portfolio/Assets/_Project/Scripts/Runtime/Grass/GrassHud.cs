@@ -41,8 +41,9 @@ namespace Portfolio.Grass
             if (m_CaptureAt >= 0f && Time.time >= m_CaptureAt)
             {
                 ScreenCapture.CaptureScreenshot(m_ScreenshotPath);
-                Debug.Log($"Grass: {m_Stats.AverageMs:0.00} ms, 1% low {m_Stats.OnePercentLowFps:0} fps, " +
-                          $"blades {field.VisibleBlades}, chunks LOD0 {field.VisibleLod0} / LOD1 {field.VisibleLod1}");
+                Debug.Log($"Frame: {m_Stats.AverageMs:0.00} ms, 1% low {m_Stats.OnePercentLowFps:0} fps" + (field != null
+                    ? $", blades {field.VisibleBlades}, chunks LOD0 {field.VisibleLod0} / LOD1 {field.VisibleLod1}"
+                    : ""));
                 m_CaptureAt = -1f;
                 Invoke(nameof(Quit), 0.5f); // снимок пишется в конце кадра
             }

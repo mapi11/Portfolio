@@ -22,6 +22,14 @@ Pet-проекты Technical Artist на Unity 6 (URP): VFX, шейдеры, р�
 
 Сцена: `Assets/_Project/Scenes/GrassField.unity`
 
+### Winter Glade: cartoon зима
+
+![Winter Glade](Docs/Images/winter_glade.png)
+
+Мультяшная зимняя поляна: toon-шейдер со снежными шапками и искрящимся снегом, лёд с глубиной трещин без прозрачности, ёлка, трава из-под снега, снегопад. [Подробнее](Docs/Winter.md)
+
+Сцена: `Assets/_Project/Scenes/WinterGlade.unity`
+
 ### Asset Validator
 
 Проверка 3D-ассетов по бюджетам (полигоны, LOD, кости, текстуры, именование) при импорте, в окне редактора и в CI.
