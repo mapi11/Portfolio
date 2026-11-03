@@ -2,8 +2,7 @@
     "name": "Portfolio.Runtime",
     "rootNamespace": "Portfolio",
     "references": [
-        "Unity.InputSystem",
-        "Unity.Animation.Rigging"
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -24,12 +24,6 @@ namespace Portfolio.Editor.Validation
                 maxTrianglesLod0 = 12000, minLodCount = 3, maxTextureSize = 2048,
                 maxMaterialsPerRenderer = 2, maxBones = 20, maxBonesPerVertex = 2
             });
-            budgets.rules.Add(new AssetBudgets.Rule
-            {
-                name = "FP Arms", folder = "Assets/_Project/Art/Characters/FPSArms",
-                maxTrianglesLod0 = 8000, minLodCount = 0, maxTextureSize = 1024,
-                maxMaterialsPerRenderer = 1, maxBones = 45, maxBonesPerVertex = 4
-            });
 
             System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(Path));
             AssetDatabase.CreateAsset(budgets, Path);

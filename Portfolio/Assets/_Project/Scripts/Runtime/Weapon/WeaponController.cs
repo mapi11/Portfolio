@@ -33,9 +33,7 @@ namespace Portfolio.Weapon
         public float kickReturnSpeed = 20f;
 
         public bool TriggerOverride { get; set; }
-        public bool Blocked { get; set; }
         public int ShotsFired { get; private set; }
-        public event System.Action Fired;
 
         float m_Cooldown;
         float m_Kick;
@@ -61,7 +59,7 @@ namespace Portfolio.Weapon
         void Update()
         {
             m_Cooldown -= Time.deltaTime;
-            if (TriggerHeld && !Blocked)
+            if (TriggerHeld)
             {
                 // не больше 3 выстрелов за кадр, иначе после фриза вылетает очередь
                 for (var shots = 0; m_Cooldown <= 0f && shots < 3; shots++)
@@ -106,7 +104,6 @@ namespace Portfolio.Weapon
             m_Kick = 1f;
             if (look != null)
                 look.AddRecoil(cameraKick.x, Random.Range(-cameraKick.y, cameraKick.y));
-            Fired?.Invoke();
         }
 
         void UpdateKick()

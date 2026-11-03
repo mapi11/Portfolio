@@ -18,7 +18,6 @@ namespace Portfolio.Editor.Showcase
         const string VfxTextures = Root + "/VFX/Textures";
         const string VfxMaterials = Root + "/VFX/Materials";
         const string EnvMaterials = Root + "/Art/Environment/Materials";
-        const string WeaponMaterials = Root + "/Art/Weapons/Placeholder/Materials";
         const string ScenePath = Root + "/Scenes/WeaponRange.unity";
 
         static Shader ParticleShader => Shader.Find("Portfolio/VFX/Particle");
@@ -284,8 +283,6 @@ namespace Portfolio.Editor.Showcase
             var metal = LitMaterial(EnvMaterials + "/M_Env_Metal.mat", new Color(0.5f, 0.53f, 0.56f), 0.9f, 0.55f);
             var painted = LitMaterial(EnvMaterials + "/M_Env_MetalPainted.mat", new Color(0.18f, 0.3f, 0.22f), 0.4f, 0.4f);
             var wood = LitMaterial(EnvMaterials + "/M_Env_Wood.mat", new Color(0.5f, 0.35f, 0.21f), 0f, 0.25f);
-            var gunMetal = LitMaterial(WeaponMaterials + "/M_Placeholder_GunMetal.mat", new Color(0.12f, 0.12f, 0.13f), 0.7f, 0.45f);
-            var polymer = LitMaterial(WeaponMaterials + "/M_Placeholder_Polymer.mat", new Color(0.2f, 0.19f, 0.17f), 0f, 0.3f);
             var brass = LitMaterial(VfxMaterials + "/M_Shell_Brass.mat", new Color(0.85f, 0.64f, 0.3f), 1f, 0.75f, instancing: true);
 
             var environment = new GameObject("Environment").transform;
@@ -326,13 +323,10 @@ namespace Portfolio.Editor.Showcase
 
             var weaponGo = new GameObject("Weapon");
             weaponGo.transform.SetParent(camera.transform, false);
-            weaponGo.transform.localPosition = new Vector3(0.13f, -0.15f, 0.36f);
+            weaponGo.transform.localPosition = Ak47Weapon.HoldPosition;
             var kickRoot = new GameObject("KickRoot").transform;
             kickRoot.SetParent(weaponGo.transform, false);
-            BuildPlaceholderWeapon(kickRoot, gunMetal, polymer);
-
-            var muzzleSocket = Socket(kickRoot, "socket_muzzle", new Vector3(0, 0.012f, 0.47f));
-            var shellSocket = Socket(kickRoot, "socket_shell_eject", new Vector3(0.03f, 0.02f, 0.04f));
+            var (muzzleSocket, shellSocket) = Ak47Weapon.Attach(kickRoot);
             var muzzle = (GameObject)PrefabUtility.InstantiatePrefab(muzzlePrefab, muzzleSocket);
 
             var systems = new GameObject("VFX Systems");
@@ -367,32 +361,6 @@ namespace Portfolio.Editor.Showcase
             BuildScenes.Add(ScenePath);
         }
 
-        static void BuildPlaceholderWeapon(Transform parent, Material gunMetal, Material polymer)
-        {
-            var model = new GameObject("SM_Placeholder_AR").transform;
-            model.SetParent(parent, false);
-            Piece(model, "Receiver", PrimitiveType.Cube, gunMetal, new Vector3(0, 0, 0), new Vector3(0.05f, 0.07f, 0.3f));
-            Piece(model, "Handguard", PrimitiveType.Cube, polymer, new Vector3(0, 0.005f, 0.24f), new Vector3(0.045f, 0.05f, 0.2f));
-            Piece(model, "Barrel", PrimitiveType.Cylinder, gunMetal, new Vector3(0, 0.012f, 0.4f), new Vector3(0.016f, 0.07f, 0.016f), new Vector3(90, 0, 0));
-            Piece(model, "Magazine", PrimitiveType.Cube, gunMetal, new Vector3(0, -0.075f, 0.06f), new Vector3(0.028f, 0.1f, 0.055f), new Vector3(10, 0, 0));
-            Piece(model, "Grip", PrimitiveType.Cube, polymer, new Vector3(0, -0.06f, -0.08f), new Vector3(0.03f, 0.08f, 0.035f), new Vector3(-15, 0, 0));
-            Piece(model, "Sight", PrimitiveType.Cube, gunMetal, new Vector3(0, 0.05f, 0.02f), new Vector3(0.02f, 0.025f, 0.05f));
-            Piece(model, "Stock", PrimitiveType.Cube, polymer, new Vector3(0, -0.01f, -0.22f), new Vector3(0.04f, 0.06f, 0.16f));
-        }
-
-        static void Piece(Transform parent, string name, PrimitiveType type, Material material, Vector3 position, Vector3 scale, Vector3 euler = default)
-        {
-            var go = GameObject.CreatePrimitive(type);
-            go.name = name;
-            Object.DestroyImmediate(go.GetComponent<Collider>());
-            go.transform.SetParent(parent, false);
-            go.transform.SetLocalPositionAndRotation(position, Quaternion.Euler(euler));
-            go.transform.localScale = scale;
-            var renderer = go.GetComponent<MeshRenderer>();
-            renderer.sharedMaterial = material;
-            renderer.shadowCastingMode = ShadowCastingMode.Off;
-        }
-
         static void Block(Transform parent, string name, PrimitiveType type, Material material, SurfaceType surface,
             Vector3 position, Vector3 scale, float yaw = 0f)
         {
@@ -404,14 +372,6 @@ namespace Portfolio.Editor.Showcase
             go.transform.localScale = scale;
             go.GetComponent<MeshRenderer>().sharedMaterial = material;
             go.AddComponent<Surface>().type = surface;
-        }
-
-        static Transform Socket(Transform parent, string name, Vector3 position)
-        {
-            var socket = new GameObject(name).transform;
-            socket.SetParent(parent, false);
-            socket.localPosition = position;
-            return socket;
         }
     }
 }

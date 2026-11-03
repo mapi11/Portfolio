@@ -33,16 +33,6 @@ MonoBehaviour:
     maxBonesPerVertex: 2
     maxTextureSize: 2048
     requireMobileCompression: 1
-  - name: FP Arms
-    folder: Assets/_Project/Art/Characters/FPSArms
-    maxTrianglesLod0: 8000
-    minLodCount: 0
-    maxLodTriangleRatio: 0.6
-    maxMaterialsPerRenderer: 1
-    maxBones: 45
-    maxBonesPerVertex: 4
-    maxTextureSize: 1024
-    requireMobileCompression: 1
   staticMeshPrefix: SM_
   skinnedMeshPrefix: SK_
   texturePrefix: T_
