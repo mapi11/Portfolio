@@ -94,7 +94,8 @@ namespace Portfolio.VFX
                         shell.position += move;
                     }
 
-                    shell.rotation = Quaternion.Euler(shell.angularVelocity * dt) * shell.rotation;
+                    // без нормализации кватернион за сотни кадров «уплывает», и TRS начинает ругаться
+                    shell.rotation = Quaternion.Normalize(Quaternion.Euler(shell.angularVelocity * dt) * shell.rotation);
                 }
 
                 m_Matrices[visible++] = Matrix4x4.TRS(shell.position, shell.rotation, scale);

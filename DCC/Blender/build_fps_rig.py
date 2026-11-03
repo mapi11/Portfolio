@@ -27,8 +27,8 @@ FORWARD = Vector((0, -1, 0))
 RIGHT = Vector((-1, 0, 0))
 UP = Vector((0, 0, 1))
 
-SHOULDERS = Vector((0, 0.03, -0.29))    # середина плеч относительно камеры
-GRIP = Vector((-0.12, -0.27, -0.2))    # пистолетная рукоять в позе удержания
+SHOULDERS = Vector((0, -0.09, -0.21))   # середина плеч: рукоять ниже плеча, как у стрелка
+GRIP = Vector((-0.12, -0.36, -0.29))    # пистолетная рукоять в позе удержания
 AK_SCALE = 0.88 / 1.986                # длина реального АК
 ARMS_SCALE = 1.12
 PALM_LENGTH = 0.07      # от запястья до центра ладони
@@ -141,9 +141,9 @@ def import_ak():
     grip_width = max(v.x for v in grip) - min(v.x for v in grip)
 
     # цевьё: впереди магазина, под стволом
-    hg = [v for v in verts if mag_lo.y - 0.16 < v.y < mag_lo.y - 0.03 and v.z < top - 0.02]
+    hg = [v for v in verts if mag_lo.y - 0.12 < v.y < mag_lo.y - 0.02 and v.z < top - 0.02]
     hg_bottom = min(v.z for v in hg)
-    hg_y = (mag_lo.y - 0.16 + mag_lo.y - 0.03) / 2
+    hg_y = mag_lo.y - 0.06
     handguard = Vector(((min(v.x for v in hg) + max(v.x for v in hg)) / 2, hg_y, hg_bottom))
     points = {
         "grip_top": grip_a,
@@ -219,7 +219,7 @@ def build_skeleton(rig, points):
     edit_bone(eb, "ik_hand_l", eb["b_hand_l"].head.copy(), eb["b_hand_l"].tail.copy(), "b_weapon_root", deform=False)
     for side, sign in (("l", 1), ("r", -1)):
         elbow = eb[f"b_forearm_{side}"].head.copy()
-        pole = SHOULDERS + (Vector((0.1, -0.35, -0.35)) if side == "l" else Vector((-0.5, 0.0, -0.12)))
+        pole = SHOULDERS + (Vector((0.15, -0.3, -0.4)) if side == "l" else Vector((-0.4, -0.08, -0.25)))
         edit_bone(eb, f"ik_pole_elbow_{side}", pole, pole + UP * 0.05, "b_spine_fp", deform=False)
     bpy.ops.object.mode_set(mode="OBJECT")
 
@@ -304,27 +304,41 @@ def set_grip(rig, side, grip, frame=None):
                 b.keyframe_insert("rotation_euler", frame=frame)
 
 
-def hold_targets(points):
-    # правая: ладонь на задней правой стороне рукояти, пальцы обхватывают спереди, большой — вверх вдоль неё
-    axis = (points["grip_bottom"] - points["grip_top"]).normalized()
-    mid = points["grip_top"].lerp(points["grip_bottom"], 0.45)
-    palm_r = (-RIGHT * 0.8 + FORWARD * 0.35).normalized()
-    fingers_r = axis.cross(palm_r)
-    if fingers_r.dot(FORWARD) < 0:
-        fingers_r = -fingers_r
-    contact_r = mid - palm_r * (points["grip_width"] * 0.5)
-    hold_r = hand_matrix("r", contact_r, palm_r, fingers_r)
+HOLD = {}
 
-    # левая: ладонь вверх под цевьём, пальцы обхватывают его справа, большой вдоль ствола
-    contact_l = points["handguard_bottom"]
-    hold_l = hand_matrix("l", contact_l, UP, RIGHT + FORWARD * 0.25 + UP * 0.15)
-    return hold_r, hold_l
+
+def aligned_hand(rig, side, contact, palm, wanted, follow=0.65):
+    # пальцы продолжают предплечье, поэтому запястье почти прямое; wanted чуть доворачивает их к хвату.
+    # Цель IK — запястье, поворот кисти на локоть не влияет, хватает пары итераций.
+    target = rig.pose.bones[f"ik_hand_{side}"]
+    forearm = rig.pose.bones[f"b_forearm_{side}"]
+    m = hand_matrix(side, contact, palm, wanted)
+    for _ in range(3):
+        target.matrix = m
+        bpy.context.view_layer.update()
+        along = (forearm.tail - forearm.head).normalized()
+        m = hand_matrix(side, contact, palm, along.lerp(wanted.normalized(), 1 - follow))
+    target.matrix = m
+    bpy.context.view_layer.update()
+    return m
+
+
+def hold_targets(points):
+    return HOLD["r"], HOLD["l"]
 
 
 def place_ik_targets(rig, points):
-    hold_r, hold_l = hold_targets(points)
-    rig.pose.bones["ik_hand_r"].matrix = hold_r
-    rig.pose.bones["ik_hand_l"].matrix = hold_l
+    # правая: ладонь к рукояти с правой стороны, пальцы обхватывают её спереди
+    mid = points["grip_top"].lerp(points["grip_bottom"], 0.45)
+    palm_r = (-RIGHT + FORWARD * 0.25).normalized()
+    contact_r = mid - palm_r * (points["grip_width"] * 0.5)
+    HOLD["r"] = aligned_hand(rig, "r", contact_r, palm_r, FORWARD - UP * 0.3)
+
+    # левая: ладонь вверх-вправо под цевьём (полуповорот предплечья, без перекрута), пальцы справа
+    palm_l = (UP + RIGHT * 0.9).normalized()
+    center = points["handguard_bottom"] + UP * 0.022
+    HOLD["l"] = aligned_hand(rig, "l", center - palm_l * 0.022, palm_l, RIGHT + FORWARD * 0.4)
+
     set_grip(rig, "r", "pistol")
     set_grip(rig, "l", "handguard")
     bpy.context.view_layer.update()
@@ -371,6 +385,11 @@ def make_hold(rig, points):
 def make_reload(rig, points):
     rest = {n: rig.pose.bones[n].bone.matrix_local.copy() for n in CONTROLS}
     hold_r, hold_l = hold_targets(points)
+
+    # ладонь на левой стороне магазина, пальцы вдоль неё вперёд, кончики за передний край
+    mag_side = points["magazine"] + RIGHT * -(points["mag_width"] * 0.5)
+    grab = aligned_hand(rig, "l", mag_side + UP * -0.02 + FORWARD * -0.015, RIGHT, FORWARD - UP * 0.35, follow=0.5)
+    rig.pose.bones["ik_hand_l"].matrix = hold_l
     new_action(rig, "Reload")
 
     key(rig, "ik_hand_r", 0, hold_r)
@@ -397,10 +416,6 @@ def make_reload(rig, points):
         return (Matrix.Translation(offset + pivot) @ Matrix.Rotation(math.radians(rock), 4, "X")
                 @ Matrix.Translation(-pivot))
 
-    mag_center = points["magazine"]
-    mag_side = mag_center + RIGHT * -(points["mag_width"] * 0.5)
-    # ладонь на левой стороне магазина, пальцы обхватывают его передний край, большой — сзади
-    grab = hand_matrix("l", mag_side + UP * -0.02 + FORWARD * -0.015, RIGHT, FORWARD - UP * 0.35)
 
     out_1 = Vector((0.06, 0.05, -0.16))
     out_2 = Vector((0.2, 0.14, -0.42))
