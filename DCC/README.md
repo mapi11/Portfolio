@@ -12,4 +12,16 @@ blender --background --factory-startup --python DCC/Blender/prepare_ak47.py -- .
 
 После экспорта в Unity: `Tools/Portfolio/Install AK47 In Weapon Range`.
 
-Исходная модель (CC0): [12 Low Poly Guns](https://gintoki1234.itch.io/12-low-poly-guns), Gintoki1234.
+## LOD Demo
+
+```bash
+blender --background --factory-startup --python DCC/Blender/prepare_lod_demo.py -- .
+```
+
+Дом, машина и дерево: один меш на модель, реальная высота, пивот в основании, LOD1 и LOD2 через Decimate. Экспорт в `Portfolio/Assets/_Project/Art/LODDemo/SM_<Name>.fbx` (части `_LOD0.._LOD2`, Unity сама собирает LODGroup).
+
+После экспорта в Unity: `Tools/Portfolio/Build LOD Demo`.
+
+Исходные модели (CC0): [Car Kit](https://kenney.nl/assets/car-kit), [City Kit Suburban](https://kenney.nl/assets/city-kit-suburban), [Nature Kit](https://kenney.nl/assets/nature-kit), Kenney.
+
+Исходная модель AK47 (CC0): [12 Low Poly Guns](https://gintoki1234.itch.io/12-low-poly-guns), Gintoki1234.

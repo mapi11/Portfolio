@@ -30,6 +30,14 @@ Pet-проекты Technical Artist на Unity 6 (URP): VFX, шейдеры, р�
 
 Сцена: `Assets/_Project/Scenes/WinterGlade.unity`
 
+### LOD Demo: уровни детализации
+
+![LOD Demo](Docs/Images/lod_demo.png)
+
+Дом, машина и дерево с LOD0–2. Камера сама отъезжает и возвращается, HUD показывает текущий уровень и треугольники каждой модели, по T модели подсвечиваются цветом уровня. LOD сделаны в Blender через Decimate, у мелких объектов свои пороги переключения.
+
+Сцена: `Assets/_Project/Scenes/LODDemo.unity`
+
 ## Инструменты для художников
 
 Editor-окна в меню `Tools/Portfolio`. Работают только в редакторе и в билд не попадают.

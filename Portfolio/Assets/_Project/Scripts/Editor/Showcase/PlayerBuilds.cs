@@ -9,6 +9,7 @@ namespace Portfolio.Editor.Showcase
         const string WeaponRange = "Assets/_Project/Scenes/WeaponRange.unity";
         const string GrassField = "Assets/_Project/Scenes/GrassField.unity";
         const string WinterGlade = "Assets/_Project/Scenes/WinterGlade.unity";
+        const string LODDemo = "Assets/_Project/Scenes/LODDemo.unity";
 
         [MenuItem("Tools/Portfolio/Build/Windows - Weapon Range")]
         public static void Windows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/WeaponRange.exe", WeaponRange);
@@ -21,6 +22,12 @@ namespace Portfolio.Editor.Showcase
 
         [MenuItem("Tools/Portfolio/Build/Android - Winter Glade")]
         public static void AndroidWinter() => Build(BuildTarget.Android, "Builds/Android/WinterGlade.apk", WinterGlade);
+
+        [MenuItem("Tools/Portfolio/Build/Windows - LOD Demo")]
+        public static void WindowsLOD() => Build(BuildTarget.StandaloneWindows64, "Builds/WindowsLOD/LODDemo.exe", LODDemo);
+
+        [MenuItem("Tools/Portfolio/Build/Android - LOD Demo")]
+        public static void AndroidLOD() => Build(BuildTarget.Android, "Builds/Android/LODDemo.apk", LODDemo);
 
         [MenuItem("Tools/Portfolio/Build/Android - Weapon Range")]
         public static void Android() => Build(BuildTarget.Android, "Builds/Android/WeaponRange.apk", WeaponRange);
