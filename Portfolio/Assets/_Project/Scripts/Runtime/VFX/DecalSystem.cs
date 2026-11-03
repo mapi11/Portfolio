@@ -37,7 +37,13 @@ namespace Portfolio.VFX
         public int ActiveCount { get; private set; }
         public int DrawCalls { get; private set; }
 
-        void Awake() => m_Decals = new Decal[maxDecals];
+        void OnEnable()
+        {
+            if (m_Decals != null)
+                return;
+            m_Decals = new Decal[maxDecals];
+            m_Next = m_Count = 0;
+        }
 
         public void Add(Material material, Vector3 point, Vector3 normal, float size)
         {

@@ -10,8 +10,13 @@ namespace Portfolio.VFX
 
         readonly Dictionary<SurfaceType, BurstEffect> m_Effects = new();
 
-        void Awake()
+        void OnEnable()
         {
+            if (m_Effects.Count > 0)
+                return;
+            // после перекомпиляции в Play Mode словарь пустой, а копии эффектов остались дочерними объектами
+            foreach (var old in GetComponentsInChildren<BurstEffect>(true))
+                Destroy(old.gameObject);
             foreach (var entry in library.entries)
                 if (entry.effect != null && !m_Effects.ContainsKey(entry.surface))
                     m_Effects.Add(entry.surface, Instantiate(entry.effect, transform));

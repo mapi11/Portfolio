@@ -25,10 +25,14 @@ namespace Portfolio.VFX
         RenderParams m_RenderParams;
         Camera m_Camera;
 
-        void Awake()
+        void OnEnable()
         {
-            m_Tracers = new Tracer[capacity];
-            m_Matrices = new Matrix4x4[capacity];
+            if (m_Tracers == null)
+            {
+                m_Tracers = new Tracer[capacity];
+                m_Matrices = new Matrix4x4[capacity];
+                m_Count = 0;
+            }
             m_RenderParams = new RenderParams(material)
             {
                 shadowCastingMode = ShadowCastingMode.Off,

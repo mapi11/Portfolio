@@ -30,10 +30,16 @@ namespace Portfolio.VFX
         int m_Count;
         RenderParams m_RenderParams;
 
-        void Awake()
+        // OnEnable, а не Awake: при перекомпиляции в Play Mode массивы структур не восстанавливаются,
+        // а счётчики восстанавливаются — Unity при этом вызывает только OnDisable/OnEnable
+        void OnEnable()
         {
-            m_Shells = new Shell[capacity];
-            m_Matrices = new Matrix4x4[capacity];
+            if (m_Shells == null)
+            {
+                m_Shells = new Shell[capacity];
+                m_Matrices = new Matrix4x4[capacity];
+                m_Next = m_Count = 0;
+            }
             m_RenderParams = new RenderParams(material)
             {
                 shadowCastingMode = ShadowCastingMode.Off,

@@ -21,14 +21,15 @@ namespace Portfolio.Weapon
         public int Ammo => m_Ammo;
         public bool Reloading => m_ReloadTimer > 0f;
 
-        void Start()
+        void Start() => m_Ammo = magazineSize;
+
+        void OnEnable()
         {
-            m_Ammo = magazineSize;
             if (weapon != null)
                 weapon.Fired += OnFired;
         }
 
-        void OnDestroy()
+        void OnDisable()
         {
             if (weapon != null)
                 weapon.Fired -= OnFired;
