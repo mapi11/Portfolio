@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "renderdoc": {
+      "command": "C:/Users/astra/AppData/Local/renderdoc-mcp/renderdoc-mcp-windows-x64-v0.3.0/bin/renderdoc-mcp.exe",
+      "args": []
+    },
+    "unityMCP": {
+      "command": "C:/Users/astra/AppData/Local/Microsoft/WinGet/Links/uvx.exe",
+      "args": ["--python", "3.12", "--from", "mcpforunityserver==10.0.0", "mcp-for-unity", "--transport", "stdio"]
+    }
+  }
+}
