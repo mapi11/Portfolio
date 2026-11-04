@@ -8,7 +8,7 @@ Pet-проекты Technical Artist на Unity 6 (URP): VFX, шейдеры, р�
 
 ### Weapon Range: VFX стрельбы
 
-![Weapon Range](Docs/Images/weapon_range_win.png)
+![Weapon Range](Docs/Images/weapon_range.png)
 
 Тир для мобильного шутера: вспышка выстрела, трассеры, гильзы, попадания по металлу, бетону и дереву, следы от пуль. Окружение в общем стиле проекта, ящики, контейнер, бочки и бетонные блоки собраны кодом.
 
