@@ -20,18 +20,11 @@ namespace Portfolio.Editor.Showcase
         public static readonly Color BackdropTop = Hex(0x1A1A1A);
         public static readonly Color BackdropHorizon = Hex(0x626262);
 
-        // Платформа size×size метров со скруглёнными углами: линии каждый метр, тонкие — каждые полметра
-        public static GameObject CreateFloor(float size, float cornerRadius)
+        // Платформа со скруглёнными углами: линии каждый метр, тонкие — каждые полметра
+        public static GameObject CreateFloor(Vector2 size, float cornerRadius)
         {
-            var path = Root + "/SM_Style_Floor.asset";
-            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
-            if (mesh == null)
-            {
-                mesh = new Mesh { name = "SM_Style_Floor" };
-                AssetDatabase.CreateAsset(mesh, path);
-            }
+            var mesh = MeshAsset($"SM_Style_Floor_{size.x:0.##}x{size.y:0.##}");
             FloorMesh(mesh, size, cornerRadius, 0.25f);
-            EditorUtility.SetDirty(mesh);
 
             var floor = new GameObject("Floor") { isStatic = true };
             floor.AddComponent<MeshFilter>().sharedMesh = mesh;
@@ -39,6 +32,66 @@ namespace Portfolio.Editor.Showcase
             renderer.sharedMaterial = FloorMaterial();
             renderer.shadowCastingMode = ShadowCastingMode.Off;
             return floor;
+        }
+
+        // Стена или блок в той же сетке. Пивот внизу по центру, UV в метрах — клетки везде одного размера
+        public static GameObject CreateGridBox(string name, Vector3 size)
+        {
+            var mesh = MeshAsset($"SM_Style_Box_{size.x:0.##}x{size.y:0.##}x{size.z:0.##}");
+            var builder = new PropMeshBuilder(1);
+            builder.Box(0, Vector3.up * size.y * 0.5f, size);
+            builder.Apply(mesh);
+
+            var box = new GameObject(name) { isStatic = true };
+            box.AddComponent<MeshFilter>().sharedMesh = mesh;
+            box.AddComponent<MeshRenderer>().sharedMaterial = FloorMaterial();
+            return box;
+        }
+
+        // Фон, отражения и заливка окружением для демо-сцены
+        public static void ApplyEnvironment(Color ambient)
+        {
+            RenderSettings.skybox = CreateBackdrop();
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = ambient;
+            var probe = new SphericalHarmonicsL2();
+            probe.AddAmbientLight(ambient.linear);
+            RenderSettings.ambientProbe = probe;
+            RenderSettings.fog = false;
+            RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
+            RenderSettings.customReflectionTexture = ReflectionCube();
+        }
+
+        // Однотонное окружение в тон фона: без него URP отражает дефолтное дневное небо и всё блестит
+        static Cubemap ReflectionCube()
+        {
+            var path = Root + "/T_Style_Reflection.cubemap";
+            const int size = 8;
+            var color = Color.Lerp(BackdropTop, BackdropHorizon, 0.5f).linear;
+            var cube = new Cubemap(size, TextureFormat.RGBAHalf, false);
+            foreach (CubemapFace face in new[] { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveY,
+                         CubemapFace.NegativeY, CubemapFace.PositiveZ, CubemapFace.NegativeZ })
+                for (var y = 0; y < size; y++)
+                for (var x = 0; x < size; x++)
+                    cube.SetPixel(face, x, y, color);
+            cube.Apply();
+            AssetDatabase.DeleteAsset(path);
+            AssetDatabase.CreateAsset(cube, path);
+            return cube;
+        }
+
+        static Mesh MeshAsset(string name)
+        {
+            var path = $"{Root}/Meshes/{name.Replace(',', '.')}.asset";
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (mesh == null)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                mesh = new Mesh { name = name };
+                AssetDatabase.CreateAsset(mesh, path);
+            }
+            EditorUtility.SetDirty(mesh);
+            return mesh;
         }
 
         // Студийный фон: тёмный верх плавно светлеет к горизонту
@@ -62,13 +115,13 @@ namespace Portfolio.Editor.Showcase
 
         // Верх — выпуклый скруглённый прямоугольник веером из центра, по контуру — бортик вниз.
         // UV верха в метрах от центра, поэтому линии сетки совпадают с целыми координатами мира
-        static void FloorMesh(Mesh mesh, float size, float radius, float thickness)
+        static void FloorMesh(Mesh mesh, Vector2 size, float radius, float thickness)
         {
             const int cornerSegments = 12;
-            var half = size * 0.5f;
-            var inner = half - radius;
+            var ix = size.x * 0.5f - radius;
+            var iz = size.y * 0.5f - radius;
             var outline = new List<Vector3>();
-            var corners = new[] { new Vector2(inner, inner), new Vector2(-inner, inner), new Vector2(-inner, -inner), new Vector2(inner, -inner) };
+            var corners = new[] { new Vector2(ix, iz), new Vector2(-ix, iz), new Vector2(-ix, -iz), new Vector2(ix, -iz) };
             for (var c = 0; c < 4; c++)
                 for (var s = 0; s <= cornerSegments; s++)
                 {
@@ -94,7 +147,7 @@ namespace Portfolio.Editor.Showcase
             var side = vertices.Count;
             for (var i = 0; i < n; i++)
             {
-                var normal = new Vector3(outline[i].x, 0f, outline[i].z) - new Vector3(Mathf.Clamp(outline[i].x, -inner, inner), 0f, Mathf.Clamp(outline[i].z, -inner, inner));
+                var normal = new Vector3(outline[i].x, 0f, outline[i].z) - new Vector3(Mathf.Clamp(outline[i].x, -ix, ix), 0f, Mathf.Clamp(outline[i].z, -iz, iz));
                 normal.Normalize();
                 vertices.Add(outline[i]);
                 vertices.Add(outline[i] + Vector3.down * thickness);

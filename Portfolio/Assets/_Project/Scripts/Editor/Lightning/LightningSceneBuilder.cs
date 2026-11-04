@@ -49,7 +49,7 @@ namespace Portfolio.Editor.Lightning
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
-            var floor = ProjectStyle.CreateFloor(FloorSize, FloorCorner);
+            var floor = ProjectStyle.CreateFloor(Vector2.one * FloorSize, FloorCorner);
 
             var key = Object.FindFirstObjectByType<Light>();
             key.name = "Key / Flash Light";
@@ -71,15 +71,7 @@ namespace Portfolio.Editor.Lightning
             emberLight.shadows = LightShadows.None;
             emberLight.enabled = false;
 
-            RenderSettings.skybox = ProjectStyle.CreateBackdrop();
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = ProjectStyle.Surface;
-            RenderSettings.fog = false;
-            RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
-            RenderSettings.customReflectionTexture = ReflectionCube(Root + "/Textures/T_Storm_Reflection.cubemap");
-            var probe = new SphericalHarmonicsL2();
-            probe.AddAmbientLight(RenderSettings.ambientLight.linear);
-            RenderSettings.ambientProbe = probe;
+            ProjectStyle.ApplyEnvironment(ProjectStyle.Surface);
 
             var volume = new GameObject("Global Volume").AddComponent<Volume>();
             volume.isGlobal = true;
@@ -240,23 +232,6 @@ namespace Portfolio.Editor.Lightning
             limit.drag = drag;
             limit.multiplyDragByParticleSize = false;
             limit.multiplyDragByParticleVelocity = false;
-        }
-
-        // Однотонное окружение в тон фона: без него URP отражает дефолтное дневное небо и пол светится
-        static Cubemap ReflectionCube(string path)
-        {
-            const int size = 8;
-            var color = Color.Lerp(ProjectStyle.BackdropTop, ProjectStyle.BackdropHorizon, 0.5f).linear;
-            var cube = new Cubemap(size, TextureFormat.RGBAHalf, false);
-            foreach (CubemapFace face in new[] { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveY,
-                         CubemapFace.NegativeY, CubemapFace.PositiveZ, CubemapFace.NegativeZ })
-                for (var y = 0; y < size; y++)
-                for (var x = 0; x < size; x++)
-                    cube.SetPixel(face, x, y, color);
-            cube.Apply();
-            AssetDatabase.DeleteAsset(path);
-            AssetDatabase.CreateAsset(cube, path);
-            return cube;
         }
 
         static VolumeProfile VolumeProfileAsset()

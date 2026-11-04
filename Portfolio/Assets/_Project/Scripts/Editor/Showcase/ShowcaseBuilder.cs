@@ -278,37 +278,55 @@ namespace Portfolio.Editor.Showcase
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
-            var concrete = LitMaterial(EnvMaterials + "/M_Env_Concrete.mat", new Color(0.56f, 0.55f, 0.53f), 0f, 0.2f);
-            var floor = LitMaterial(EnvMaterials + "/M_Env_Floor.mat", new Color(0.36f, 0.36f, 0.35f), 0f, 0.15f);
+            var concrete = LitMaterial(EnvMaterials + "/M_Env_Concrete.mat", new Color(0.42f, 0.42f, 0.41f), 0f, 0.2f);
             var metal = LitMaterial(EnvMaterials + "/M_Env_Metal.mat", new Color(0.5f, 0.53f, 0.56f), 0.9f, 0.55f);
+            var steel = LitMaterial(EnvMaterials + "/M_Env_Steel.mat", new Color(0.24f, 0.25f, 0.26f), 0.8f, 0.4f);
             var painted = LitMaterial(EnvMaterials + "/M_Env_MetalPainted.mat", new Color(0.18f, 0.3f, 0.22f), 0.4f, 0.4f);
+            var paintedDark = LitMaterial(EnvMaterials + "/M_Env_MetalPaintedDark.mat", new Color(0.11f, 0.19f, 0.14f), 0.4f, 0.35f);
             var wood = LitMaterial(EnvMaterials + "/M_Env_Wood.mat", new Color(0.5f, 0.35f, 0.21f), 0f, 0.25f);
+            var woodDark = LitMaterial(EnvMaterials + "/M_Env_WoodDark.mat", new Color(0.3f, 0.2f, 0.12f), 0f, 0.2f);
             var brass = LitMaterial(VfxMaterials + "/M_Shell_Brass.mat", new Color(0.85f, 0.64f, 0.3f), 1f, 0.75f, instancing: true);
 
+            // пол и стены в общей сетке проекта
             var environment = new GameObject("Environment").transform;
-            Block(environment, "Floor", PrimitiveType.Plane, floor, SurfaceType.Concrete, new Vector3(0, 0, 18), new Vector3(3, 1, 4.5f));
-            Block(environment, "Wall_Back", PrimitiveType.Cube, concrete, SurfaceType.Concrete, new Vector3(0, 2.5f, 24), new Vector3(16, 5, 0.5f));
-            Block(environment, "Wall_Left", PrimitiveType.Cube, concrete, SurfaceType.Concrete, new Vector3(-8, 2.5f, 15), new Vector3(0.5f, 5, 18));
-            Block(environment, "Wall_Right", PrimitiveType.Cube, concrete, SurfaceType.Concrete, new Vector3(8, 2.5f, 15), new Vector3(0.5f, 5, 18));
+            var floor = ProjectStyle.CreateFloor(new Vector2(18f, 30f), 2.5f);
+            floor.transform.SetParent(environment, false);
+            floor.transform.position = new Vector3(0f, 0f, 11f);
+            floor.AddComponent<MeshCollider>();
+            floor.AddComponent<Surface>().type = SurfaceType.Concrete;
+            Wall(environment, "Wall_Back", new Vector3(0f, 0f, 24f), new Vector3(16.5f, 5f, 0.5f));
+            Wall(environment, "Wall_Left", new Vector3(-8f, 0f, 15f), new Vector3(0.5f, 5f, 18f));
+            Wall(environment, "Wall_Right", new Vector3(8f, 0f, 15f), new Vector3(0.5f, 5f, 18f));
 
-            Block(environment, "Concrete_Block_A", PrimitiveType.Cube, concrete, SurfaceType.Concrete, new Vector3(-4.5f, 1f, 11), new Vector3(1.2f, 2f, 1.2f));
-            Block(environment, "Concrete_Block_B", PrimitiveType.Cube, concrete, SurfaceType.Concrete, new Vector3(-2.6f, 0.5f, 9), new Vector3(2f, 1f, 0.6f));
+            var pillar = PropMesh("SM_Range_ConcretePillar", m => RangePropMeshes.ConcretePillar(m, 1.2f, 2f));
+            var barrier = PropMesh("SM_Range_JerseyBarrier", m => RangePropMeshes.JerseyBarrier(m, 2f));
+            var targetTall = PropMesh("SM_Range_SteelTarget_Tall", m => RangePropMeshes.SteelTarget(m, 1f, 1.4f, 0.6f));
+            var targetWide = PropMesh("SM_Range_SteelTarget_Wide", m => RangePropMeshes.SteelTarget(m, 1.2f, 1f, 0.6f));
+            var drum = PropMesh("SM_Range_Drum", RangePropMeshes.Drum);
+            var container = PropMesh("SM_Range_ShippingContainer", RangePropMeshes.ShippingContainer);
+            var crate = PropMesh("SM_Range_Crate", m => RangePropMeshes.Crate(m, 1f));
+            var planks = PropMesh("SM_Range_PlankWall", m => RangePropMeshes.PlankWall(m, 3f, 2f));
 
-            Block(environment, "Metal_Plate_A", PrimitiveType.Cube, metal, SurfaceType.Metal, new Vector3(-0.8f, 1.3f, 12), new Vector3(1f, 1.4f, 0.04f), 8f);
-            Block(environment, "Metal_Plate_B", PrimitiveType.Cube, metal, SurfaceType.Metal, new Vector3(1.6f, 1.1f, 15), new Vector3(1.2f, 1f, 0.04f), -12f);
-            Block(environment, "Metal_Barrel", PrimitiveType.Cylinder, painted, SurfaceType.Metal, new Vector3(4.2f, 0.9f, 10), new Vector3(0.6f, 0.9f, 0.6f));
-            Block(environment, "Metal_Container", PrimitiveType.Cube, painted, SurfaceType.Metal, new Vector3(5.5f, 1.3f, 18), new Vector3(3f, 2.6f, 2f), 20f);
+            Prop(environment, "Concrete_Pillar", pillar, new[] { concrete }, SurfaceType.Concrete, new Vector3(-4.5f, 0f, 11f));
+            Prop(environment, "Concrete_Barrier", barrier, new[] { concrete }, SurfaceType.Concrete, new Vector3(-2.6f, 0f, 9f));
 
-            Block(environment, "Wood_Crate_A", PrimitiveType.Cube, wood, SurfaceType.Wood, new Vector3(2.4f, 0.5f, 8), Vector3.one);
-            Block(environment, "Wood_Crate_B", PrimitiveType.Cube, wood, SurfaceType.Wood, new Vector3(3.4f, 0.45f, 8.6f), Vector3.one * 0.9f, 25f);
-            Block(environment, "Wood_Crate_C", PrimitiveType.Cube, wood, SurfaceType.Wood, new Vector3(2.6f, 1.4f, 8.2f), Vector3.one * 0.8f, -10f);
-            Block(environment, "Wood_Planks", PrimitiveType.Cube, wood, SurfaceType.Wood, new Vector3(-3.5f, 1.1f, 16), new Vector3(3f, 2.2f, 0.12f));
+            Prop(environment, "Steel_Target_A", targetTall, new[] { metal, steel }, SurfaceType.Metal, new Vector3(-0.8f, 0f, 12f), 8f);
+            Prop(environment, "Steel_Target_B", targetWide, new[] { metal, steel }, SurfaceType.Metal, new Vector3(1.6f, 0f, 15f), -12f);
+            Prop(environment, "Drum_A", drum, new[] { painted, steel }, SurfaceType.Metal, new Vector3(4.2f, 0f, 10f), 30f);
+            Prop(environment, "Drum_B", drum, new[] { painted, steel }, SurfaceType.Metal, new Vector3(4.9f, 0f, 10.6f), 140f);
+            Prop(environment, "Shipping_Container", container, new[] { painted, paintedDark, steel }, SurfaceType.Metal, new Vector3(5.5f, 0f, 18f), 4f);
+
+            Prop(environment, "Wood_Crate_A", crate, new[] { wood, woodDark }, SurfaceType.Wood, new Vector3(2.4f, 0f, 8f));
+            Prop(environment, "Wood_Crate_B", crate, new[] { wood, woodDark }, SurfaceType.Wood, new Vector3(3.4f, 0f, 8.6f), 25f, 0.9f);
+            Prop(environment, "Wood_Crate_C", crate, new[] { wood, woodDark }, SurfaceType.Wood, new Vector3(2.5f, 1f, 8.05f), -10f, 0.8f);
+            Prop(environment, "Wood_Planks", planks, new[] { wood, woodDark }, SurfaceType.Wood, new Vector3(-3.5f, 0f, 16f));
 
             var light = Object.FindFirstObjectByType<Light>();
             light.transform.rotation = Quaternion.Euler(48f, -35f, 0f);
-            light.color = new Color(1f, 0.95f, 0.87f);
+            light.color = new Color(1f, 0.97f, 0.93f);
             light.intensity = 1.3f;
             light.shadows = LightShadows.Soft;
+            ProjectStyle.ApplyEnvironment(ProjectStyle.Line);
 
             var volume = new GameObject("Global Volume").AddComponent<Volume>();
             volume.isGlobal = true;
@@ -361,16 +379,42 @@ namespace Portfolio.Editor.Showcase
             BuildScenes.Add(ScenePath);
         }
 
-        static void Block(Transform parent, string name, PrimitiveType type, Material material, SurfaceType surface,
-            Vector3 position, Vector3 scale, float yaw = 0f)
+        static void Wall(Transform parent, string name, Vector3 position, Vector3 size)
         {
-            var go = GameObject.CreatePrimitive(type);
-            go.name = name;
-            go.isStatic = true;
+            var wall = ProjectStyle.CreateGridBox(name, size);
+            wall.transform.SetParent(parent, false);
+            wall.transform.position = position;
+            var collider = wall.AddComponent<BoxCollider>();
+            collider.center = Vector3.up * size.y * 0.5f;
+            collider.size = size;
+            wall.AddComponent<Surface>().type = SurfaceType.Concrete;
+        }
+
+        static Mesh PropMesh(string name, System.Action<Mesh> build)
+        {
+            var path = Root + "/Art/Environment/Meshes/" + name + ".asset";
+            var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (mesh == null)
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                mesh = new Mesh { name = name };
+                AssetDatabase.CreateAsset(mesh, path);
+            }
+            build(mesh);
+            EditorUtility.SetDirty(mesh);
+            return mesh;
+        }
+
+        static void Prop(Transform parent, string name, Mesh mesh, Material[] materials, SurfaceType surface,
+            Vector3 position, float yaw = 0f, float scale = 1f)
+        {
+            var go = new GameObject(name) { isStatic = true };
             go.transform.SetParent(parent, false);
             go.transform.SetPositionAndRotation(position, Quaternion.Euler(0, yaw, 0));
-            go.transform.localScale = scale;
-            go.GetComponent<MeshRenderer>().sharedMaterial = material;
+            go.transform.localScale = Vector3.one * scale;
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            go.AddComponent<MeshRenderer>().sharedMaterials = materials;
+            go.AddComponent<MeshCollider>().sharedMesh = mesh;
             go.AddComponent<Surface>().type = surface;
         }
     }
