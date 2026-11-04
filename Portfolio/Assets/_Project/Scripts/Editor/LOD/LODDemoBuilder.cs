@@ -28,20 +28,9 @@ namespace Portfolio.Editor.LodDemo
 
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
-            var groundMaterial = AssetDatabase.LoadAssetAtPath<Material>(Art + "/M_LODDemo_Ground.mat");
-            if (groundMaterial == null)
-            {
-                groundMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                AssetDatabase.CreateAsset(groundMaterial, Art + "/M_LODDemo_Ground.mat");
-            }
-            groundMaterial.SetColor("_BaseColor", new Color(0.42f, 0.5f, 0.36f));
-            groundMaterial.SetFloat("_Smoothness", 0.05f);
-
-            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            ground.name = "Ground";
-            ground.isStatic = true;
-            ground.transform.localScale = new Vector3(150f, 1f, 150f);
-            ground.GetComponent<MeshRenderer>().sharedMaterial = groundMaterial;
+            // платформа в общем стиле: при отъезде камеры она уменьшается вместе с моделями
+            // и тянется к камере, чтобы на ближнем плане пол заполнял низ кадра
+            ProjectStyle.CreateFloor(new Vector2(32f, 34f), 2.5f).transform.position = new Vector3(0f, 0f, -7f);
 
             var groups = new List<LODGroup>();
             foreach (var (name, x, yaw, small) in new[] { ("House", -9f, 200f, false), ("Car", 0f, 145f, true), ("Tree", 8f, 0f, false) })
@@ -65,12 +54,7 @@ namespace Portfolio.Editor.LodDemo
             light.transform.rotation = Quaternion.Euler(40f, -30f, 0f);
             light.intensity = 1.3f;
             light.shadows = LightShadows.Soft;
-
-            RenderSettings.fog = true;
-            RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogStartDistance = 150f;
-            RenderSettings.fogEndDistance = 600f;
-            RenderSettings.fogColor = new Color(0.7f, 0.78f, 0.86f);
+            ProjectStyle.ApplyEnvironment(ProjectStyle.Line);
 
             var volume = new GameObject("Global Volume").AddComponent<Volume>();
             volume.isGlobal = true;
