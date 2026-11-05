@@ -9,6 +9,8 @@ float4 _GrassWind;
 float4 _GrassWindParams;
 float4 _GrassInteractor;
 float4 _GrassFade;
+float4 _GrassObstacles[8]; // xy — центр на плоскости XZ, z — радиус; ставит GrassField
+half4 _GrassDebugTint; // отладка LOD: rgb — цвет, a — сила; задаётся на каждый уровень
 
 CBUFFER_START(UnityPerMaterial)
     half4 _RootColor;
@@ -22,6 +24,11 @@ CBUFFER_START(UnityPerMaterial)
     float _PatchScale;
     half _PatchMinHeight;
     half _Bendiness;
+    half4 _FlowerColor0;
+    half4 _FlowerColor1;
+    half4 _FlowerColor2;
+    half4 _FlowerColor3;
+    half4 _FlowerCenter;
 CBUFFER_END
 
 struct GrassAttributes
@@ -30,6 +37,7 @@ struct GrassAttributes
     float3 normalOS : NORMAL;
     float2 uv : TEXCOORD0;
     float4 blade : TEXCOORD1;
+    half4 color : COLOR; // r — головка цветка, g — цвет в палитре, b — от сердцевины к краю
     UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
@@ -40,6 +48,7 @@ struct GrassVertex
     float height01;
     float2 random;
     float patch;
+    float3 flower;
 };
 
 float SampleGrassNoise(float2 uv)
@@ -58,6 +67,15 @@ GrassVertex DisplaceGrass(GrassAttributes input)
     float fade = saturate((_GrassFade.y - distanceToCamera) / max(_GrassFade.y - _GrassFade.x, 1e-3));
     // вдали травинка сжимается к корню вместо альфа-фейда
     offset *= lerp(_PatchMinHeight, 1.0, patch) * fade;
+
+    // под камнями травинки сжимаются к корню, иначе цветы и кончики прорастают сквозь них
+    [unroll]
+    for (int i = 0; i < 8; i++)
+    {
+        float4 obstacle = _GrassObstacles[i];
+        float d = distance(rootWS.xz, obstacle.xy);
+        offset *= obstacle.z > 0.0 ? smoothstep(obstacle.z * 0.8, obstacle.z, d) : 1.0;
+    }
 
     float2 direction = _GrassWind.xy;
     float gust = SampleGrassNoise(rootWS.xz * _GrassWindParams.x - direction * (_Time.y * _GrassWind.w));
@@ -83,6 +101,7 @@ GrassVertex DisplaceGrass(GrassAttributes input)
     output.height01 = h;
     output.random = input.blade.zw;
     output.patch = patch;
+    output.flower = input.color.rgb;
     return output;
 }
 

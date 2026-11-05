@@ -24,7 +24,20 @@ namespace Portfolio.Grass
         public float maxDistance = 40f;
         public float fadeLength = 10f;
 
+        [Header("Препятствия: x, z, радиус. Под ними травинки сжимаются к корню")]
+        public Vector4[] obstacles = Array.Empty<Vector4>();
+
+        [Header("Отладка")]
+        [Tooltip("Красит чанки по уровню: зелёный LOD0, жёлтый LOD1")]
+        public bool debugLod;
+
+        public const int MaxObstacles = 8;
         static readonly int s_GrassFade = Shader.PropertyToID("_GrassFade");
+        static readonly int s_GrassObstacles = Shader.PropertyToID("_GrassObstacles");
+        static readonly int s_DebugTint = Shader.PropertyToID("_GrassDebugTint");
+        static readonly Vector4 s_Lod0Tint = new(0.3f, 0.85f, 0.35f, 0.85f);
+        static readonly Vector4 s_Lod1Tint = new(0.95f, 0.78f, 0.2f, 0.85f);
+        readonly Vector4[] m_Obstacles = new Vector4[MaxObstacles];
 
         Matrix4x4[] m_Chunks;
         Bounds[] m_ChunkBounds;
@@ -33,7 +46,8 @@ namespace Portfolio.Grass
         float[] m_Lod0Keys;
         float[] m_Lod1Keys;
         readonly Plane[] m_Planes = new Plane[6];
-        RenderParams m_RenderParams;
+        RenderParams m_Lod0Params;
+        RenderParams m_Lod1Params;
 
         public int VisibleLod0 { get; private set; }
         public int VisibleLod1 { get; private set; }
@@ -74,17 +88,26 @@ namespace Portfolio.Grass
                     new Vector3(chunkSize + maxBladeHeight * 2f, maxBladeHeight, chunkSize + maxBladeHeight * 2f));
             }
 
-            m_RenderParams = new RenderParams(material)
-            {
-                shadowCastingMode = ShadowCastingMode.Off,
-                receiveShadows = true,
-                worldBounds = new Bounds(transform.position, new Vector3(size.x, maxBladeHeight * 4f, size.y))
-            };
+            // у каждого уровня свой блок свойств: в отладке он красит чанки цветом LOD
+            m_Lod0Params = CreateRenderParams();
+            m_Lod1Params = CreateRenderParams();
         }
+
+        RenderParams CreateRenderParams() => new(material)
+        {
+            shadowCastingMode = ShadowCastingMode.Off,
+            receiveShadows = true,
+            worldBounds = new Bounds(transform.position, new Vector3(size.x, maxBladeHeight * 4f, size.y)),
+            matProps = new MaterialPropertyBlock()
+        };
 
         void Update()
         {
             Shader.SetGlobalVector(s_GrassFade, new Vector4(maxDistance - fadeLength, maxDistance, 0f, 0f));
+            // пустые слоты с нулевым радиусом шейдер пропускает
+            for (var i = 0; i < MaxObstacles; i++)
+                m_Obstacles[i] = i < obstacles.Length ? obstacles[i] : Vector4.zero;
+            Shader.SetGlobalVectorArray(s_GrassObstacles, m_Obstacles);
         }
 
         void LateUpdate()
@@ -123,10 +146,12 @@ namespace Portfolio.Grass
             Array.Sort(m_Lod0Keys, m_Lod0Matrices, 0, lod0Count);
             Array.Sort(m_Lod1Keys, m_Lod1Matrices, 0, lod1Count);
 
+            m_Lod0Params.matProps.SetVector(s_DebugTint, debugLod ? s_Lod0Tint : Vector4.zero);
+            m_Lod1Params.matProps.SetVector(s_DebugTint, debugLod ? s_Lod1Tint : Vector4.zero);
             if (lod0Count > 0)
-                Graphics.RenderMeshInstanced(m_RenderParams, lod0, 0, m_Lod0Matrices, lod0Count);
+                Graphics.RenderMeshInstanced(m_Lod0Params, lod0, 0, m_Lod0Matrices, lod0Count);
             if (lod1Count > 0)
-                Graphics.RenderMeshInstanced(m_RenderParams, lod1, 0, m_Lod1Matrices, lod1Count);
+                Graphics.RenderMeshInstanced(m_Lod1Params, lod1, 0, m_Lod1Matrices, lod1Count);
 
             VisibleLod0 = lod0Count;
             VisibleLod1 = lod1Count;

@@ -13,6 +13,9 @@ namespace Portfolio.Editor.Grass
             public Vector2 width;
             public Vector2 lean;
             public int seed;
+            public int flowerPatches;
+            public float flowerPatchRadius;
+            public float flowerDensity;
         }
 
         struct Blade
@@ -24,6 +27,7 @@ namespace Portfolio.Editor.Grass
             public float width;
             public float lean;
             public Vector4 data;
+            public int flower; // -1 — обычная травинка, иначе номер цвета в палитре
         }
 
         public static (int lod0, int lod1) Build(Mesh lod0, Mesh lod1, Settings settings, int lod1Step, float lod1WidthScale)
@@ -57,8 +61,28 @@ namespace Portfolio.Editor.Grass
                     height = height,
                     width = Mathf.Lerp(settings.width.x, settings.width.y, Next()),
                     lean = Mathf.Lerp(settings.lean.x, settings.lean.y, Next()) * height,
-                    data = new Vector4(root.x, root.z, Next(), Next())
+                    data = new Vector4(root.x, root.z, Next(), Next()),
+                    flower = -1
                 });
+            }
+
+            // цветы растут пятнами одного цвета и чуть выше травы, как на лугу
+            for (var c = 0; c < settings.flowerPatches; c++)
+            {
+                var center = new Vector2((Next() - 0.5f) * settings.chunkSize, (Next() - 0.5f) * settings.chunkSize);
+                var palette = random.Next(4);
+                for (var i = 0; i < result.Count; i++)
+                {
+                    var blade = result[i];
+                    if (blade.flower >= 0 || Vector2.Distance(new Vector2(blade.root.x, blade.root.z), center) > settings.flowerPatchRadius
+                        || Next() > settings.flowerDensity)
+                        continue;
+                    blade.flower = palette;
+                    blade.width = 0.014f;
+                    blade.height = settings.height.y * Mathf.Lerp(0.85f, 1.15f, Next());
+                    blade.lean *= 0.3f;
+                    result[i] = blade;
+                }
             }
 
             for (var i = result.Count - 1; i > 0; i--)
@@ -76,6 +100,7 @@ namespace Portfolio.Editor.Grass
             var normals = new List<Vector3>();
             var uv0 = new List<Vector2>();
             var uv1 = new List<Vector4>();
+            var colors = new List<Color>();
             var indices = new List<int>();
 
             for (var b = 0; b < blades.Count; b += step)
@@ -112,12 +137,31 @@ namespace Portfolio.Editor.Grass
                 var lastRow = start + (segments - 1) * 2;
                 indices.AddRange(new[] { lastRow, lastRow + 2, lastRow + 1 });
 
-                void Add(Vector3 position, Vector3 normal, Vector2 uv)
+                if (blade.flower >= 0)
+                {
+                    // головка: веер лепестков вокруг кончика. r — цветок, g — цвет в палитре, b — от сердцевины к краю
+                    var tip = blade.root + Vector3.up * blade.height + blade.forward * blade.lean;
+                    var head = vertices.Count;
+                    var palette = blade.flower / 3f;
+                    Add(tip + Vector3.up * 0.01f, Vector3.up, new Vector2(0.5f, 1f), new Color(1f, palette, 0f, 0f));
+                    const int petals = 6;
+                    for (var p = 0; p < petals; p++)
+                    {
+                        var angle = p * Mathf.PI * 2f / petals;
+                        var offset = (blade.forward * Mathf.Cos(angle) + blade.right * Mathf.Sin(angle)) * 0.07f;
+                        Add(tip + offset, Vector3.up, new Vector2(0.5f, 1f), new Color(1f, palette, 1f, 0f));
+                    }
+                    for (var p = 0; p < petals; p++)
+                        indices.AddRange(new[] { head, head + 1 + p, head + 1 + (p + 1) % petals });
+                }
+
+                void Add(Vector3 position, Vector3 normal, Vector2 uv, Color color = default)
                 {
                     vertices.Add(position);
                     normals.Add(normal);
                     uv0.Add(uv);
                     uv1.Add(blade.data);
+                    colors.Add(color);
                 }
             }
 
@@ -127,6 +171,7 @@ namespace Portfolio.Editor.Grass
             mesh.SetNormals(normals);
             mesh.SetUVs(0, uv0);
             mesh.SetUVs(1, uv1);
+            mesh.SetColors(colors);
             mesh.SetTriangles(indices, 0);
             mesh.RecalculateBounds();
             mesh.UploadMeshData(false);

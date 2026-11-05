@@ -226,7 +226,7 @@ namespace Portfolio.Editor.Winter
             Apply(mesh, vertices.ToArray(), colors.ToArray(), indices.ToArray(), null);
         }
 
-        static void Icosphere(List<Vector3> vertices, List<int> indices, int subdivisions)
+        internal static void Icosphere(List<Vector3> vertices, List<int> indices, int subdivisions)
         {
             var t = (1f + Mathf.Sqrt(5f)) / 2f;
             vertices.AddRange(new[]

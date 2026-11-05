@@ -11,6 +11,8 @@ namespace Portfolio.Grass
         public Vector3 orbitCenter;
         public float orbitRadius = 4f;
         public float orbitSpeed = 0.35f;
+        [Tooltip("Радиус качения: поворот за кадр = пройденный путь / радиус")]
+        public float rollRadius = 0.5f;
 
         static readonly int s_Interactor = Shader.PropertyToID("_GrassInteractor");
 
@@ -25,9 +27,8 @@ namespace Portfolio.Grass
                 transform.position = position;
 
                 var delta = position - previous;
-                var size = transform.lossyScale.x * 0.5f;
-                if (delta.sqrMagnitude > 1e-8f && size > 0f)
-                    transform.Rotate(Vector3.Cross(Vector3.up, delta.normalized), delta.magnitude / size * Mathf.Rad2Deg, Space.World);
+                if (delta.sqrMagnitude > 1e-8f && rollRadius > 0f)
+                    transform.Rotate(Vector3.Cross(Vector3.up, delta.normalized), delta.magnitude / rollRadius * Mathf.Rad2Deg, Space.World);
             }
 
             var p = transform.position;

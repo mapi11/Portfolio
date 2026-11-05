@@ -19,6 +19,13 @@ Shader "Portfolio/Grass"
         _PatchScale ("Patch Noise Scale", Float) = 0.02
         _PatchMinHeight ("Patch Min Height", Range(0, 1)) = 0.45
         _Bendiness ("Bendiness", Range(0, 2)) = 1
+
+        [Header(Flowers)]
+        _FlowerColor0 ("Flower A", Color) = (0.96, 0.95, 0.9, 1)
+        _FlowerColor1 ("Flower B", Color) = (0.62, 0.42, 0.92, 1)
+        _FlowerColor2 ("Flower C", Color) = (1, 0.82, 0.22, 1)
+        _FlowerColor3 ("Flower D", Color) = (0.92, 0.26, 0.22, 1)
+        _FlowerCenter ("Center", Color) = (1, 0.75, 0.15, 1)
     }
 
     SubShader
@@ -54,6 +61,7 @@ Shader "Portfolio/Grass"
                 half3 normalWS : TEXCOORD1;
                 half4 data : TEXCOORD2;
                 half patch : TEXCOORD3;
+                half3 flower : TEXCOORD4;
             };
 
             Varyings Vert(GrassAttributes input)
@@ -67,6 +75,7 @@ Shader "Portfolio/Grass"
                 output.normalWS = grass.normalWS;
                 output.data = half4(grass.height01, grass.random, ComputeFogFactor(output.positionCS.z));
                 output.patch = grass.patch;
+                output.flower = grass.flower;
                 return output;
             }
 
@@ -81,6 +90,11 @@ Shader "Portfolio/Grass"
                 albedo *= 1.0h + (random.y - 0.5h) * _ColorVariation;
                 albedo *= lerp(0.8h, 1.15h, input.patch);
 
+                half3 flower = input.flower;
+                half4 petal = flower.g < 0.17h ? _FlowerColor0 : flower.g < 0.5h ? _FlowerColor1 : flower.g < 0.84h ? _FlowerColor2 : _FlowerColor3;
+                albedo = lerp(albedo, lerp(_FlowerCenter.rgb, petal.rgb, smoothstep(0.0h, 0.6h, flower.b)), flower.r);
+                albedo = lerp(albedo, _GrassDebugTint.rgb, _GrassDebugTint.a);
+
                 Light light = GetMainLight(TransformWorldToShadowCoord(input.positionWS));
                 half shadow = light.shadowAttenuation * light.distanceAttenuation;
                 half3 normal = normalize(input.normalWS);
@@ -89,7 +103,7 @@ Shader "Portfolio/Grass"
 
                 half3 viewDirection = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 half back = saturate(dot(viewDirection, -light.direction));
-                back *= back * height * _Translucency;
+                back *= back * height * _Translucency * (1.0h - input.flower.r);
 
                 half3 color = albedo * (light.color * (wrap * shadow) + SampleSH(normal))
                             + _TranslucencyColor.rgb * light.color * (back * shadow);
