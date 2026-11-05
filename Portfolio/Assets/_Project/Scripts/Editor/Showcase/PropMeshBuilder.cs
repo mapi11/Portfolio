@@ -94,6 +94,31 @@ namespace Portfolio.Editor.Showcase
             }
         }
 
+        // UV-сфера: кольца по широте, сегменты по долготе
+        public void Sphere(int submesh, Vector3 center, float radius, int segments, int rings)
+        {
+            var start = m_Vertices.Count;
+            for (var r = 0; r <= rings; r++)
+            {
+                var latitude = Mathf.PI * r / rings;
+                for (var s = 0; s <= segments; s++)
+                {
+                    var longitude = Mathf.PI * 2f * s / segments;
+                    var normal = new Vector3(Mathf.Sin(latitude) * Mathf.Cos(longitude), Mathf.Cos(latitude), Mathf.Sin(latitude) * Mathf.Sin(longitude));
+                    m_Vertices.Add(center + normal * radius);
+                    m_Normals.Add(normal);
+                    m_Uvs.Add(new Vector2((float)s / segments, 1f - (float)r / rings));
+                }
+            }
+            for (var r = 0; r < rings; r++)
+            for (var s = 0; s < segments; s++)
+            {
+                var a = start + r * (segments + 1) + s;
+                var b = a + segments + 1;
+                m_Submeshes[submesh].AddRange(new[] { a, a + 1, b, a + 1, b + 1, b });
+            }
+        }
+
         // Выпуклый профиль в плоскости ZY, вытянутый вдоль локальной X на length
         public void Extrude(int submesh, Matrix4x4 transform, Vector2[] profile, float length)
         {
