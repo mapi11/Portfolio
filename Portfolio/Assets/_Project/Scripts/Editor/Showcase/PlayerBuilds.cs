@@ -11,6 +11,7 @@ namespace Portfolio.Editor.Showcase
         const string WinterGlade = "Assets/_Project/Scenes/WinterGlade.unity";
         const string LODDemo = "Assets/_Project/Scenes/LODDemo.unity";
         const string LightningStorm = "Assets/_Project/Scenes/LightningStorm.unity";
+        const string Digitize = "Assets/_Project/Scenes/Digitize.unity";
 
         [MenuItem("Tools/Portfolio/Build/Windows - Weapon Range")]
         public static void Windows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/WeaponRange.exe", WeaponRange);
@@ -32,6 +33,9 @@ namespace Portfolio.Editor.Showcase
 
         [MenuItem("Tools/Portfolio/Build/Windows - Lightning Storm")]
         public static void WindowsLightning() => Build(BuildTarget.StandaloneWindows64, "Builds/WindowsLightning/LightningStorm.exe", LightningStorm);
+
+        [MenuItem("Tools/Portfolio/Build/Windows - Digitize")]
+        public static void WindowsDigitize() => Build(BuildTarget.StandaloneWindows64, "Builds/WindowsDigitize/Digitize.exe", Digitize);
 
         [MenuItem("Tools/Portfolio/Build/Android - Weapon Range")]
         public static void Android() => Build(BuildTarget.Android, "Builds/Android/WeaponRange.apk", WeaponRange);

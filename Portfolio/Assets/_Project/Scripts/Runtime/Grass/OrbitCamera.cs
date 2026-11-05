@@ -13,17 +13,20 @@ namespace Portfolio.Grass
         public float yaw;
         public float autoRotateSpeed = 6f;
         public float sensitivity = 0.2f;
+        [Tooltip("Крутить правой кнопкой: левая и касание остаются сцене (например, чтобы водить шар)")]
+        public bool dragWithRightButton;
 
         void Update()
         {
             var drag = Vector2.zero;
             if (Mouse.current != null)
             {
-                if (Mouse.current.leftButton.isPressed)
+                var button = dragWithRightButton ? Mouse.current.rightButton : Mouse.current.leftButton;
+                if (button.isPressed)
                     drag = Mouse.current.delta.ReadValue();
                 distance -= Mouse.current.scroll.ReadValue().y * 0.01f;
             }
-            if (Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
+            if (!dragWithRightButton && Touchscreen.current != null && Touchscreen.current.primaryTouch.press.isPressed)
                 drag = Touchscreen.current.primaryTouch.delta.ReadValue();
 
             if (drag == Vector2.zero)

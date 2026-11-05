@@ -1,0 +1,4 @@
+Models and textures: Poly Haven (https://polyhaven.com), license CC0. Files renamed to project conventions.
+- MarbleBust: https://polyhaven.com/a/marble_bust_01
+- HorseStatue: https://polyhaven.com/a/horse_statue_01
+- GothicStatue: https://polyhaven.com/a/gothic_statue
