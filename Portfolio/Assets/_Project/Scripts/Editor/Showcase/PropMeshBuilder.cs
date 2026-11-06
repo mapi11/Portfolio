@@ -13,6 +13,8 @@ namespace Portfolio.Editor.Showcase
         readonly List<Vector2> m_Uvs = new();
         readonly List<int>[] m_Submeshes;
 
+        public int VertexCount => m_Vertices.Count;
+
         public PropMeshBuilder(int submeshes)
         {
             m_Submeshes = new List<int>[submeshes];

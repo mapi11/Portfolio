@@ -13,6 +13,7 @@ namespace Portfolio.Editor.Showcase
         const string LightningStorm = "Assets/_Project/Scenes/LightningStorm.unity";
         const string Digitize = "Assets/_Project/Scenes/Digitize.unity";
         const string Scanner = "Assets/_Project/Scenes/Scanner.unity";
+        const string Crowd = "Assets/_Project/Scenes/Crowd.unity";
 
         [MenuItem("Tools/Portfolio/Build/Windows - Weapon Range")]
         public static void Windows() => Build(BuildTarget.StandaloneWindows64, "Builds/Windows/WeaponRange.exe", WeaponRange);
@@ -40,6 +41,9 @@ namespace Portfolio.Editor.Showcase
 
         [MenuItem("Tools/Portfolio/Build/Windows - Scanner")]
         public static void WindowsScanner() => Build(BuildTarget.StandaloneWindows64, "Builds/WindowsScanner/Scanner.exe", Scanner);
+
+        [MenuItem("Tools/Portfolio/Build/Windows - Crowd")]
+        public static void WindowsCrowd() => Build(BuildTarget.StandaloneWindows64, "Builds/WindowsCrowd/Crowd.exe", Crowd);
 
         [MenuItem("Tools/Portfolio/Build/Android - Weapon Range")]
         public static void Android() => Build(BuildTarget.Android, "Builds/Android/WeaponRange.apk", WeaponRange);

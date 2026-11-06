@@ -57,7 +57,7 @@ namespace Portfolio.Editor.Scanner
             glow.SetColor("_BaseColor", ProjectStyle.Accent * 2f);
 
             var mannequin = MeshAsset("SM_Scan_Mannequin");
-            Mannequin(mannequin);
+            MannequinMesh.Build(mannequin, skinned: false);
             AssetDatabase.SaveAssets();
 
             BuildScene(target, glow, mannequin);
@@ -170,52 +170,6 @@ namespace Portfolio.Editor.Scanner
             data.SetDirty();
             EditorUtility.SetDirty(data);
         }
-
-        // Тренировочный манекен ростом 1.8 м, пивот под ногами
-        static void Mannequin(Mesh mesh)
-        {
-            var b = new PropMeshBuilder(1);
-
-            // торс из трёх частей: широкая грудь, узкая талия, таз — уже не «столб»
-            var flat = new Vector3(1f, 1f, 0.62f);
-            b.Cylinder(0, Matrix4x4.TRS(new Vector3(0f, 1.36f, 0f), Quaternion.identity, flat), 0.18f, 0.3f, 12);
-            b.Cylinder(0, Matrix4x4.TRS(new Vector3(0f, 1.13f, 0f), Quaternion.identity, flat), 0.14f, 0.2f, 12);
-            b.Cylinder(0, Matrix4x4.TRS(new Vector3(0f, 0.96f, 0f), Quaternion.identity, new Vector3(1f, 1f, 0.7f)), 0.16f, 0.16f, 12);
-            b.Sphere(0, new Vector3(0f, 1.5f, 0f), 0.11f, 10, 6);
-            b.Cylinder(0, Matrix4x4.Translate(new Vector3(0f, 1.57f, 0f)), 0.045f, 0.1f, 8);
-            b.Sphere(0, new Vector3(0f, 1.71f, 0.01f), 0.11f, 14, 10);
-
-            for (var side = -1; side <= 1; side += 2)
-            {
-                var shoulder = new Vector3(side * 0.22f, 1.46f, 0f);
-                var elbow = new Vector3(side * 0.27f, 1.18f, -0.02f);
-                var wrist = new Vector3(side * 0.28f, 0.92f, 0.04f);
-                Joint(b, shoulder, 0.065f);
-                Limb(b, shoulder, elbow, 0.05f);
-                Joint(b, elbow, 0.046f);
-                Limb(b, elbow, wrist, 0.042f);
-                Joint(b, wrist + Vector3.down * 0.05f, 0.05f);
-
-                var hip = new Vector3(side * 0.1f, 0.9f, 0f);
-                var knee = new Vector3(side * 0.11f, 0.48f, 0.02f);
-                var ankle = new Vector3(side * 0.11f, 0.08f, 0f);
-                Joint(b, hip, 0.08f);
-                Limb(b, hip, knee, 0.072f);
-                Joint(b, knee, 0.062f);
-                Limb(b, knee, ankle, 0.056f);
-                b.Box(0, new Vector3(side * 0.11f, 0.035f, 0.04f), new Vector3(0.09f, 0.07f, 0.22f));
-            }
-            b.Apply(mesh);
-        }
-
-        static void Limb(PropMeshBuilder builder, Vector3 from, Vector3 to, float radius)
-        {
-            var direction = to - from;
-            var transform = Matrix4x4.TRS((from + to) * 0.5f, Quaternion.FromToRotation(Vector3.up, direction), Vector3.one);
-            builder.Cylinder(0, transform, radius, direction.magnitude, 10, caps: false);
-        }
-
-        static void Joint(PropMeshBuilder builder, Vector3 center, float radius) => builder.Sphere(0, center, radius, 10, 6);
 
         static Mesh MeshAsset(string name)
         {
